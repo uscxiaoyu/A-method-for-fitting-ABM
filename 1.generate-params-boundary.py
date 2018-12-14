@@ -1,10 +1,10 @@
 # coding=utf-8
 from abmdiffuse import Diffuse
 from bassestimate import BassEstimate
+from pymongo import MongoClient
 import numpy as np
 import networkx as nx
 import time
-import random
 import pickle
 
 
@@ -70,7 +70,8 @@ class Gen_para:
 
     def generate_sample(self, n_p=10, n_q=20):
         rg_p, rg_q = self.identify_range()
-        sp_cont = [(p, q) for p in np.linspace(rg_p[0], rg_p[1], n_p) for q in np.linspace(rg_q[0], rg_q[1], n_q)]
+        sp_cont = [(p, q) for p in np.linspace(rg_p[0], rg_p[1], n_p) 
+                        for q in np.linspace(rg_q[0], rg_q[1], n_q)]
         return sp_cont
 
 
@@ -88,28 +89,38 @@ def func(p, q, g):
 
 
 if __name__ == '__main__':
-    expon_seq = np.load('exponential_sequance.npy')
-    gauss_seq = np.load('gaussian_sequance.npy')
-    logno_seq = np.load('lognormal_sequance.npy')
-    g_cont = [nx.barabasi_albert_graph(10000, 3), generate_random_graph(expon_seq), generate_random_graph(gauss_seq),
-              nx.gnm_random_graph(10000, 100000), nx.gnm_random_graph(10000, 30000),
-              nx.gnm_random_graph(10000, 40000), nx.gnm_random_graph(10000, 50000), nx.gnm_random_graph(10000, 60000),
-              nx.gnm_random_graph(10000, 70000), nx.gnm_random_graph(10000, 80000), nx.gnm_random_graph(10000, 90000),
-              generate_random_graph(logno_seq),
+    client = MongoClient('localhost', 27017)
+    db = client.abmDiffusion
+    prj = db.networks
+
+    expon_seq = np.load('dataSources/exponential_sequance.npy')
+    gauss_seq = np.load('dataSources/gaussian_sequance.npy')
+    logno_seq = np.load('dataSources/lognormal_sequance.npy')
+    facebook_graph = nx.read_gpickle('dataSources/facebook.gpickle')
+    epinions_graph = nx.read_gpickle('dataSources/epinions.gpickle')   
+    g_cont = [nx.barabasi_albert_graph(10000, 3), generate_random_graph(expon_seq), 
+              generate_random_graph(gauss_seq), nx.gnm_random_graph(10000, 100000), 
+              nx.gnm_random_graph(10000, 30000), nx.gnm_random_graph(10000, 40000), 
+              nx.gnm_random_graph(10000, 50000), nx.gnm_random_graph(10000, 60000),
+              nx.gnm_random_graph(10000, 70000), nx.gnm_random_graph(10000, 80000), 
+              nx.gnm_random_graph(10000, 90000), generate_random_graph(logno_seq),
               nx.watts_strogatz_graph(10000, 6, 0), nx.watts_strogatz_graph(10000, 6, 0.1),
               nx.watts_strogatz_graph(10000, 6, 0.3), nx.watts_strogatz_graph(10000, 6, 0.5),
               nx.watts_strogatz_graph(10000, 6, 0.7), nx.watts_strogatz_graph(10000, 6, 0.9),
-              nx.watts_strogatz_graph(10000, 6, 1)]
+              nx.watts_strogatz_graph(10000, 6, 1),
+              facebook_graph, epinions_graph]
 
-    txt_cont = ['barabasi_albert_graph(10000,3)', 'exponential_graph(10000,3)', 'gaussian_graph(10000,3)',
-                'gnm_random_graph(10000,100000)', 'gnm_random_graph(10000,30000)',
-                'gnm_random_graph(10000,40000)', 'gnm_random_graph(10000,50000)', 'gnm_random_graph(10000,60000)',
-                'gnm_random_graph(10000,70000)', 'gnm_random_graph(10000,80000)', 'gnm_random_graph(10000,90000)',
-                'lognormal_graph(10000,3)',
+    txt_cont = ['barabasi_albert_graph(10000,3)', 'exponential_graph(10000,3)', 
+                'gaussian_graph(10000,3)', 'gnm_random_graph(10000,100000)', 
+                'gnm_random_graph(10000,30000)', 'gnm_random_graph(10000,40000)', 
+                'gnm_random_graph(10000,50000)', 'gnm_random_graph(10000,60000)',
+                'gnm_random_graph(10000,70000)', 'gnm_random_graph(10000,80000)', 
+                'gnm_random_graph(10000,90000)', 'lognormal_graph(10000,3)',
                 'watts_strogatz_graph(10000,6,0)', 'watts_strogatz_graph(10000,6,0.1)',
                 'watts_strogatz_graph(10000,6,0.3)', 'watts_strogatz_graph(10000,6,0.5)',
                 'watts_strogatz_graph(10000,6,0.7)', 'watts_strogatz_graph(10000,6,0.9)',
-                'watts_strogatz_graph(10000,6,1.0)']
+                'watts_strogatz_graph(10000,6,1.0)',
+                'facebook_graph', 'epinions_graph']
 
     bound_dict = {}
     for j, g in enumerate(g_cont):
@@ -119,8 +130,11 @@ if __name__ == '__main__':
         q_cont = (0.076*3.0/(j + 4), 0.12*3.0/(j + 4))  # 小心设置
         delta = (0.00031, 0.008*3.0/(j + 4))
         ger_samp = Gen_para(g=g, p_cont=p_cont, q_cont=q_cont, delta=delta)
-        bound_dict[txt_cont[j]] = ger_samp.identify_range()
+        bound = ger_samp.identify_range()
+        bound_dict[txt_cont[j]] = bound
+        prj.insert_one({"_id": txt_cont[j], "para_boundary": bound})
         print(f'  time: {time.clock() - t1:.2f}s')
 
     f = open('dataSources/bound_artinetworks.pkl', 'wb')
     pickle.dump(bound_dict, f)
+    f.close()
