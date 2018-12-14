@@ -19,50 +19,51 @@ class Gen_para:
         diff = Diffuse(p, q, g=self.g)
         x = np.mean(diff.repete_diffuse(), axis=0)
         max_idx = np.argmax(x)
-        s = x[: (max_idx + 2)]
-        para_range = [[1e-6, 0.1], [1e-5, 0.8], [2000, 20000]]
+        s = x[:(max_idx + 2)]
+        para_range = [[1e-6, 0.1], [1e-5, 0.8], [s, 4*self.g.number_of_nodes]]
         bassest = BassEstimate(s, para_range)
         bassest.t_n = 1000
-        res = bassest.optima_search(c_n=200, threshold=10e-8)
-        return res[:2]
+        res = bassest.optima_search(c_n=200, threshold=10e-6)
+        return res[1:3]  # P, Q
 
     def identify_range(self):
         min_p, max_p = self.p_cont
         min_q, max_q = self.q_cont
-        est_cont = [self.add_data(p, q) for p, q in ((min_p, min_q), (max_p, max_q))]
+        est_cont = [self.add_data(p, q) for p, q in [(min_p, min_q), (max_p, max_q)]]
         i = 1
-        while True:
+        while True:  # P: 0.007~0.03, Q: 0.38~0.53
             min_P, min_Q = est_cont[0]
             max_P, max_Q = est_cont[1]
-            print(i, ' P:%.4f~%.4f' % (min_P, max_P), ' Q:%.4f~%.4f' % (min_Q, max_Q))
+            print(i, f'P:{min_P:.4f}~{max_P:.4f}', f'Q:{min_Q:.4f}~{max_Q:.4f}' )
             c1, c2 = 0, 0
-            if min_P > 0.0007 or min_p > 0.0005:  # in case of min_p < 0
-                if min_p - self.d_p > 0:
-                    min_p -= self.d_p
-                else:
-                    min_p *= 0.8
+            # 如果min_P大于下限，则减少min_p的下限值；另防止min_p < 0
+            if min_P > 0.0007:
+                min_p = min_p - self.d_p if min_p > self.d_p else 0.0005
                 c1 += 1
-            if min_Q > 0.38:
+
+            if min_Q > 0.38:  # 如果min_Q小于下限，则减少min_q的下限值
                 min_q -= self.d_q
                 c1 += 1
-            if max_P < 0.03:
+
+            if max_P < 0.03:  # 如果max_P小于上限，则增加max_p的上限值
                 max_p += self.d_p
                 c2 += 1
-            if max_Q < 0.53:
+
+            if max_Q < 0.53:  # 如果max_Q小于上限，则增加max_q的上限值
                 max_q += self.d_q
                 c2 += 1
 
             i += 1
 
-            if c1 + c2 != 0:  # check which ends should be updated
-                if c1 != 0:
+            if c1 + c2 != 0:  # 查看是否进行了更新
+                if c1 != 0:  # 如果min_p或者min_q更新了，则减少
                     est_cont[0] = self.add_data(min_p, min_q)
-                if c2 != 0:
+                if c2 != 0:  # 如果max_p或者max_q更新了，则增加
                     est_cont[1] = self.add_data(max_p, max_q)
             else:
                 break
 
-            if i == 25:
+            if i == 20:
                 break
 
         return [(min_p, max_p), (min_q, max_q)], [(min_P, max_P), (min_Q, max_Q)]
@@ -87,7 +88,6 @@ def func(p, q, g):
 
 
 if __name__ == '__main__':
-    """
     expon_seq = np.load('exponential_sequance.npy')
     gauss_seq = np.load('gaussian_sequance.npy')
     logno_seq = np.load('lognormal_sequance.npy')
@@ -111,26 +111,16 @@ if __name__ == '__main__':
                 'watts_strogatz_graph(10000,6,0.7)', 'watts_strogatz_graph(10000,6,0.9)',
                 'watts_strogatz_graph(10000,6,1.0)']
 
-    """
-
-    bound_dict = {'gnm_random_graph(10000,30000)': [(0.00038, 0.02182), (0.076, 0.12)]}
-    g_cont = [nx.gnm_random_graph(10000, 40000), nx.gnm_random_graph(10000, 50000), nx.gnm_random_graph(10000, 60000),
-              nx.gnm_random_graph(10000, 70000), nx.gnm_random_graph(10000, 80000), nx.gnm_random_graph(10000, 90000),
-              nx.gnm_random_graph(10000, 100000)]
-
-    txt_cont = ['gnm_random_graph(10000,40000)', 'gnm_random_graph(10000,50000)', 'gnm_random_graph(10000,60000)',
-                'gnm_random_graph(10000,70000)', 'gnm_random_graph(10000,80000)', 'gnm_random_graph(10000,90000)',
-                'gnm_random_graph(10000,100000)']
-
+    bound_dict = {}
     for j, g in enumerate(g_cont):
         t1 = time.clock()
-        print(j + 1, txt_cont[j])
-        p_cont = (0.0003, 0.02)
-        q_cont = (0.076 * 3.0 / (j + 4), 0.12 * 3.0 / (j + 4))
-        delta = (0.00031, 0.008 * 3.0 / (j + 4))
+        print(j+1, txt_cont[j])
+        p_cont = (0.0003, 0.02)  
+        q_cont = (0.076*3.0/(j + 4), 0.12*3.0/(j + 4))  # 小心设置
+        delta = (0.00031, 0.008*3.0/(j + 4))
         ger_samp = Gen_para(g=g, p_cont=p_cont, q_cont=q_cont, delta=delta)
         bound_dict[txt_cont[j]] = ger_samp.identify_range()
-        print('  time: %.2f s' % (time.clock() - t1))
+        print(f'  time: {time.clock() - t1:.2f}s')
 
-    f = open('dataSources/bound(gmm).pkl', 'wb')
+    f = open('dataSources/bound_artinetworks.pkl', 'wb')
     pickle.dump(bound_dict, f)
