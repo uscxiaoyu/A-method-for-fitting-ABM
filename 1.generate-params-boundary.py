@@ -5,7 +5,6 @@ from pymongo import MongoClient
 import numpy as np
 import networkx as nx
 import time
-import pickle
 
 
 class Gen_para:
@@ -20,7 +19,7 @@ class Gen_para:
         x = np.mean(diff.repete_diffuse(), axis=0)
         max_idx = np.argmax(x)
         s = x[:(max_idx + 2)]
-        para_range = [[1e-6, 0.1], [1e-5, 0.8], [s, 4*self.g.number_of_nodes]]
+        para_range = [[1e-6, 0.1], [1e-5, 0.8], [s, 4*self.g.number_of_nodes()]]
         bassest = BassEstimate(s, para_range)
         bassest.t_n = 1000
         res = bassest.optima_search(c_n=200, threshold=10e-6)
@@ -38,7 +37,7 @@ class Gen_para:
             c1, c2 = 0, 0
             # 如果min_P大于下限，则减少min_p的下限值；另防止min_p < 0
             if min_P > 0.0007:
-                min_p = min_p - self.d_p if min_p > self.d_p else 0.0005
+                min_p = min_p - self.d_p if min_p > self.d_p else 0.0003
                 c1 += 1
 
             if min_Q > 0.38:  # 如果min_Q小于下限，则减少min_q的下限值
@@ -66,7 +65,8 @@ class Gen_para:
             if i == 20:
                 break
 
-        return [(min_p, max_p), (min_q, max_q)], [(min_P, max_P), (min_Q, max_Q)]
+        return {"p_range": [min_p, max_p], "q_range": [min_q, max_q],
+                "P_range": [min_P, max_P], "Q_range": [min_Q, max_Q]}
 
     def generate_sample(self, n_p=10, n_q=20):
         rg_p, rg_q = self.identify_range()
@@ -128,13 +128,8 @@ if __name__ == '__main__':
         print(j+1, txt_cont[j])
         p_cont = (0.0003, 0.02)  
         q_cont = (0.076*3.0/(j + 4), 0.12*3.0/(j + 4))  # 小心设置
-        delta = (0.00031, 0.008*3.0/(j + 4))
+        delta = (0.0001, 0.001)
         ger_samp = Gen_para(g=g, p_cont=p_cont, q_cont=q_cont, delta=delta)
         bound = ger_samp.identify_range()
-        bound_dict[txt_cont[j]] = bound
         prj.insert_one({"_id": txt_cont[j], "para_boundary": bound})
         print(f'  time: {time.clock() - t1:.2f}s')
-
-    f = open('dataSources/bound_artinetworks.pkl', 'wb')
-    pickle.dump(bound_dict, f)
-    f.close()

@@ -5,9 +5,11 @@ import random
 
 
 class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随机网络
-    def __init__(self, p, q, g=nx.gnm_random_graph(10000, 30000), num_runs=30):
+    def __init__(self, p, q, g=nx.gnm_random_graph(10000, 30000), num_runs=35):
         if not nx.is_directed(g):
             self.g = g.to_directed()
+        else:
+            self.g = g
         self.p, self.q = p, q
         self.nodes_array = np.array(self.g)
         self.num_runs = num_runs

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from copy import deepcopy as dc
 import numpy as np
 import time
 
