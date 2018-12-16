@@ -36,7 +36,7 @@ if __name__ == '__main__':
         mongo_date = prj.find_one({"_id": key})
         r_p = mongo_date['param_boundary']['p_range']
         r_q = mongo_date['param_boundary']['q_range']
-        pq_cont = [(p, q) for p in np.linspace(r_p[0], r_p[1], num=10) 
+        pq_cont = [(p, q) for p in np.linspace(r_p[0], r_p[1], num=10)
                           for q in np.linspace(r_q[0], r_q[1], num=15)]
         if key == 'exponential_graph(10000,3)':
             g = generate_random_graph(expon_seq)
@@ -63,4 +63,3 @@ if __name__ == '__main__':
         print(i + 1, key, f'Time: {(time.perf_counter() - t1):.2f} s')
         diffuse_curves = dict(data)
         prj.update_one({"_id": key}, {"$set": {"diffuse_curves": diffuse_curves}}, upsert=True)
-
