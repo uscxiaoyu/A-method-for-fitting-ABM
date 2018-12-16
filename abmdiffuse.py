@@ -6,11 +6,9 @@ import random
 
 class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随机网络
     def __init__(self, p, q, g=nx.gnm_random_graph(10000, 30000), num_runs=35):
-        if not nx.is_directed(g):
-            self.g = g.to_directed()
-        else:
-            self.g = g
-        self.p, self.q = p, q
+        self.g = g.to_directed() if not nx.is_directed(g) else g
+        self.p = max(p, 5.0e-5)
+        self.q = q
         self.nodes_array = np.array(self.g)
         self.num_runs = num_runs
         for i in self.g:
@@ -29,7 +27,6 @@ class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随�
             if self.decide(node):
                 self.g.node[node]['state'] = True
                 state_array[i] = True
-        
         return np.sum(state_array), non_node_array[state_array==False]
 
     def single_diffuse(self):
@@ -51,7 +48,7 @@ if __name__ == '__main__':
     t1 = time.perf_counter()
     p, q = 0.001, 0.05
     diffu = Diffuse(p, q)
-    diff_cont = diffu.repete_diffuse(repetes=10)
+    diffu_cont = diffu.repete_diffuse(repetes=10)
     print(f"参数设置: p--{p}, q--{q} network--{diffu.g.number_of_nodes()}")
     print(f"用时{time.perf_counter() - t1:.2f}秒")
 

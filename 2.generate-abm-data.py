@@ -13,10 +13,14 @@ def generate_random_graph(degre_sequance):
     G.remove_edges_from(G.selfloop_edges())
     return G
 
+
 def func(p, q, g):
     diff = Diffuse(p, q, g=g, num_runs=35)
     x = np.mean(diff.repete_diffuse(), axis=0)
-    return str([p, q]), np.concatenate(([p, q], x))
+    p = round(diff.p, 5)
+    q = round(diff.q, 5)
+    return str([p, q]), list(np.concatenate(([p, q], x)))
+
 
 if __name__ == '__main__':
     client = MongoClient('localhost', 27017)
@@ -56,7 +60,7 @@ if __name__ == '__main__':
         for res in result:
             data.append(res.get())
 
-        print(i + 1, key, 'Time: {(time.perf_counter() - t1):.2f} s')
+        print(i + 1, key, f'Time: {(time.perf_counter() - t1):.2f} s')
         diffuse_curves = dict(data)
-        prj.update_one({"_id": key}, {"$set": {"diffuse_curves":diffuse_curves}}, upsert=True)
-        
+        prj.update_one({"_id": key}, {"$set": {"diffuse_curves": diffuse_curves}}, upsert=True)
+
