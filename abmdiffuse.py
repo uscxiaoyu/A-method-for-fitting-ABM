@@ -48,7 +48,7 @@ if __name__ == '__main__':
     t1 = time.perf_counter()
     p, q = 0.001, 0.05
     diffu = Diffuse(p, q)
-    diff_cont = diffu.repete_diffuse(repetes=10)
+    diffu_cont = diffu.repete_diffuse(repetes=10)
     print(f"参数设置: p--{p}, q--{q} network--{diffu.g.number_of_nodes()}")
     print(f"用时{time.perf_counter() - t1:.2f}秒")
 
