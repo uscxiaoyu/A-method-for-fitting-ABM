@@ -4,13 +4,14 @@ import time
 
 
 class BassEstimate:
-    t_n = 500  # 抽样量
+    t_n = 800  # 抽样量
 
     def __init__(self, s, para_range=None, orig_points=[]):  # 初始化实例参数
         self.s, self.s_len = np.array(s), len(s)
         self.orig_points = orig_points[:]  # 初始化边界点
-        if para_range:
-            self.para_range = [[1e-6, 0.1], [1e-4, 1], [sum(s), 4*sum(s)]]  # 参数范围
+        if not para_range:
+            self.para_range = [[1e-6, 0.1], [1e-4, 0.8], [sum(s), 8*sum(s)]]  
+            # 参数范围
         else:
             self.para_range = para_range[:]  # 参数范围
         self.p_range = self.para_range[:]  # 用于产生边界节点的参数范围
@@ -42,7 +43,7 @@ class BassEstimate:
 
     def f(self, params):  # 如果要使用其它模型，可以重新定义
         p, q, m = params
-        t_list = np.arange(1, self.s_len+ 1)
+        t_list = np.arange(1, self.s_len + 1)
         a = 1 - np.exp(-(p + q) * t_list)
         b = 1 + q / p * np.exp(-(p + q) * t_list)
         diffu_cont = m * a / b
@@ -83,6 +84,7 @@ class BassEstimate:
             print('Exceed the maximal iteration: %d' % max_runs)
 
         return solution[0]  # [mse, p, q, m]
+
 
 class BassForecast:
     def __init__(self, s, n, b_idx):
@@ -163,11 +165,11 @@ if __name__=='__main__':
     t1 = time.process_time()
     para_range = [[1e-5, 0.1], [1e-5, 0.8], [sum(s), 10*sum(s)]]
     bassest = BassEstimate(s, para_range)
-    mse, p, q, m = bassest.optima_search(c_n=100, threshold=10e-5)
-    r_2 = bassest.r2([p, q, m])
+    mse, P, Q, M = bassest.optima_search(c_n=100, threshold=10e-5)
+    r_2 = bassest.r2([P, Q, M])
     print(f'Time elapsed: {(time.process_time() - t1) : .2f}s')
     print("==================================================")
-    print(f'p:{p:.4f}   q:{q:.4f}   m:{m:.0f}\nr^2:{r_2:.4f}')
+    print(f'P:{P:.4f}   Q:{Q:.4f}   M:{M:.0f}\nr^2:{r_2:.4f}')
 
     """
     bass_fore = BassForecast(S, n=3, b_idx=8)
@@ -177,6 +179,4 @@ if __name__=='__main__':
     print('MAD:%.2f  MAPE:%.2f  MSE:%.2f' % res[0])
     print('3步向前预测:', end=' ')
     print('MAD:%.2f  MAPE:%.2f  MSE:%.2f' % res[1])
-    """
-    
-    
+    """ 

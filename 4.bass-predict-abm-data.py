@@ -1,8 +1,9 @@
 # coding=utf-8
+#%%
 import numpy as np
 from bassestimate import BassEstimate, BassForecast
 
-
+#%%
 if __name__=='__main__':
     data_set = {'room air conditioners': (np.arange(1949, 1962), [96, 195, 238, 380, 1045, 1230, 1267, 1828, 1586, 1673,
                                                                   1800, 1580, 1500]),
