@@ -15,10 +15,10 @@ def generate_random_graph(degre_sequance):
 
 
 def func(p, q, g):
+    p = round(p, 5)
+    q = round(q, 5)
     diff = Diffuse(p, q, g=g, num_runs=35)
     x = np.mean(diff.repete_diffuse(), axis=0)
-    p = round(diff.p, 5)
-    q = round(diff.q, 5)
     return str([p, q]), list(np.concatenate(([p, q], x)))
 
 
@@ -42,7 +42,7 @@ if __name__ == '__main__':
             g = generate_random_graph(expon_seq)
         elif key == 'gaussian_graph(10000,3)':
             g = generate_random_graph(gauss_seq)
-        elif key == 'lognormal_graph(10000,3)': 
+        elif key == 'lognormal_graph(10000,3)':
             g = generate_random_graph(logno_seq)
         elif key in ['facebook_graph', 'epinions_graph']:
             g = eval(key)
