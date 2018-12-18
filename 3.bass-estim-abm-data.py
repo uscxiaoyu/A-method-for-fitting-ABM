@@ -1,5 +1,4 @@
 # coding=utf-8
-#%%
 from pymongo import MongoClient
 import bassestimate as eb
 import numpy as np
@@ -7,7 +6,7 @@ import datetime
 import time
 import multiprocessing
 
-#%%
+
 def func(x, n=1):
     p, q = x[:2]
     s_full = x[2:]
@@ -18,7 +17,6 @@ def func(x, n=1):
     r_2 = bassest.r2([P, Q, M])
     return [round(p, 5), round(q, 5), r_2, P, Q, M]
 
-#%%
 if __name__ == '__main__':
     client = MongoClient('localhost', 27017)
     db = client.abmDiffusion
