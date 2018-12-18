@@ -122,7 +122,7 @@ class BassForecast:
         mape = np.mean(np.abs(pred_cont - self.s[self.b_idx+1:])/self.s[self.b_idx+1:])
         mse = np.mean(np.sqrt(np.sum(np.square(pred_cont - self.s[self.b_idx+1:]))))
 
-        return mad, mape, mse
+        return list(mad), list(mape), list(mse)
 
     def n_step_ahead(self):
         pred_cont = np.array([x[:self.n] for x in self.pred_res if self.n <= len(x)])
@@ -132,7 +132,7 @@ class BassForecast:
         mape = np.mean(np.abs(pred_cont - act_cont) / act_cont)
         mse = np.mean(np.sqrt(np.sum(np.square(pred_cont - act_cont))))
 
-        return mad, mape, mse
+        return list(mad), list(mape), list(mse)
 
     def run(self):
         self.predict()
