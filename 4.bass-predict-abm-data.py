@@ -6,17 +6,14 @@ import multiprocessing
 from pymongo import MongoClient
 from bassestimate import BassEstimate, BassForecast
 
-def func(s):
-    bass_fore = BassForecast(s, n=3, b_idx=8)  # 1步向前和3步向前预测
-    res = bass_fore.run()
-    return res
 
-
-def func(x, n=3, b_idx=8):
+def func(x, n=3):
     p, q = x[:2]
     s_full = x[2:]
-    bass_fore = BassForecast(s_full, n=n, b_idx=b_idx)  # 1步向前和3步向前预测
-    res = bass_fore.run()
+    b_idx = np.argmax(s_full) - 1  # 巅峰扩散前1步
+    e_idx = np.argmax(s_full) + 3  # 巅峰扩散后3步
+    bass_fore = BassForecast(s_full, n=n, b_idx=b_idx, e_idx=e_idx) 
+    res = bass_fore.run()   # [1步向前, 3步向前预测]
     return [round(p, 5), round(q, 5), res[0], res[1]]
 
 if __name__ == "__main__":
@@ -46,5 +43,5 @@ if __name__ == "__main__":
 
         print(f"{txt}: Time elapsed {(time.perf_counter() - t1):.2f}s")
         prj.update_one({"_id": txt}, {"$set": {"forecasts": {
-                       "ctime": datetime.datetime.now(), **d_dict}}}, upsert=True)
+                            "ctime": datetime.datetime.now(), **d_dict}}}, upsert=True)
 

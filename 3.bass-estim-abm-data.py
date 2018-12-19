@@ -13,7 +13,7 @@ def func(x, n=1):
     max_ix = np.argmax(s_full)
     s = s_full[:max_ix + 1 + n]
     bassest = eb.BassEstimate(s)
-    mse, P, Q, M = bassest.optima_search(c_n=200, threshold=10e-6)
+    _, P, Q, M = bassest.optima_search(c_n=200, threshold=10e-6)
     r_2 = bassest.r2([P, Q, M])
     return [round(p, 5), round(q, 5), r_2, P, Q, M]
 

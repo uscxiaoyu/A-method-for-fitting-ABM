@@ -10,8 +10,7 @@ class BassEstimate:
         self.s, self.s_len = np.array(s), len(s)
         self.orig_points = orig_points[:]  # 初始化边界点
         if not para_range:
-            self.para_range = [[1e-6, 0.1], [1e-4, 0.8], [sum(s), 8*sum(s)]]  
-            # 参数范围
+            self.para_range = [[1e-6, 0.1], [1e-4, 0.8], [sum(s), 8*sum(s)]]
         else:
             self.para_range = para_range[:]  # 参数范围
         self.p_range = self.para_range[:]  # 用于产生边界节点的参数范围
@@ -87,52 +86,52 @@ class BassEstimate:
 
 
 class BassForecast:
-    def __init__(self, s, n, b_idx):
+    def __init__(self, s, n, b_idx, e_idx):
         self.s, self.n = s, n
         self.s_len = len(s)
         self.b_idx = b_idx  # 开始拟合的索引
+        self.e_idx = min(e_idx, self.s_len - 1)  # 结束拟合的索引
 
     def f(self, params):  # 如果要使用其它模型，可以重新定义
         p, q, m = params
         t_list = np.arange(1, self.s_len + 1)
-        a = 1 - np.exp(-(p + q) * t_list)
-        b = 1 + q / p * np.exp(-(p + q) * t_list)
-        diffu_cont = m * a / b
+        a = 1 - np.exp(-(p + q)*t_list)
+        b = 1 + q/p*np.exp(-(p + q)*t_list)
+        diffu_cont = m*a/b
         adopt_cont = np.array([diffu_cont[i] if i == 0 else diffu_cont[i] - diffu_cont[i-1]
                                for i in range(self.s_len)])
         return adopt_cont
 
-    def predict(self):  # 返回b_idx到s_len-1索引的扩散数据
+    def predict(self):  # 返回b_idx到e_idx索引的扩散数据
         pred_cont = []
-        for i in range(self.s_len-1-self.b_idx):  # 拟合次数
+        for i in range(self.e_idx - self.b_idx):  # 拟合次数
             idx = self.b_idx + 1 + i
             x = self.s[:idx]
             para_range = [[1e-5, 0.1], [1e-5, 0.8], [sum(x), 5*sum(self.s)]]
             bass_est = BassEstimate(x, para_range)
             est = bass_est.optima_search()
             params = est[1:]  # est: [mse, p, q, m]
-            pred_s = self.f(params)
+            pred_s = list(self.f(params))
             pred_cont.append(pred_s[idx:])
-
         self.pred_res = pred_cont
 
     def one_step_ahead(self):
         pred_cont = np.array([x[0] for x in self.pred_res])
-        mad = np.mean(np.abs(pred_cont - self.s[self.b_idx+1:]))
-        mape = np.mean(np.abs(pred_cont - self.s[self.b_idx+1:])/self.s[self.b_idx+1:])
-        mse = np.mean(np.sqrt(np.sum(np.square(pred_cont - self.s[self.b_idx+1:]))))
-
-        return list(mad), list(mape), list(mse)
+        mad = np.mean(np.abs(pred_cont - self.s[self.b_idx + 1 : self.e_idx + 1]))
+        mape = np.mean(np.abs(pred_cont - self.s[self.b_idx + 1 : self.e_idx + 1])/
+                    self.s[self.b_idx + 1 : self.e_idx + 1])
+        mse = np.mean(np.sqrt(np.sum(np.square(pred_cont - 
+                    self.s[self.b_idx + 1: self.e_idx + 1]))))
+        return [mad, mape, mse]
 
     def n_step_ahead(self):
         pred_cont = np.array([x[:self.n] for x in self.pred_res if self.n <= len(x)])
-        act_cont = np.array([self.s[self.b_idx+i : self.b_idx+i+self.n] 
-                                for i in range(self.s_len - self.b_idx - self.n)])
+        act_cont = np.array([self.s[self.b_idx + i + 1 : self.b_idx + i + 1 + self.n] 
+                                for i in range(len(pred_cont))])
         mad = np.mean(np.abs(pred_cont - act_cont))
         mape = np.mean(np.abs(pred_cont - act_cont) / act_cont)
         mse = np.mean(np.sqrt(np.sum(np.square(pred_cont - act_cont))))
-
-        return list(mad), list(mape), list(mse)
+        return [mad, mape, mse]
 
     def run(self):
         self.predict()
@@ -159,9 +158,10 @@ if __name__=='__main__':
                                                          12.3, 6.84, 9.02,
                                    7.82, 16.39, 7.39])}
     S = data_set['clothers dryers'][1]
-    
+
+    """
     m_idx = np.argmax(S)
-    s = S[:m_idx + 2]
+    s = S[ : m_idx + 2]
     t1 = time.process_time()
     para_range = [[1e-5, 0.1], [1e-5, 0.8], [sum(s), 10*sum(s)]]
     bassest = BassEstimate(s, para_range)
@@ -170,13 +170,13 @@ if __name__=='__main__':
     print(f'Time elapsed: {(time.process_time() - t1) : .2f}s')
     print("==================================================")
     print(f'P:{P:.4f}   Q:{Q:.4f}   M:{M:.0f}\nr^2:{r_2:.4f}')
-
     """
-    bass_fore = BassForecast(S, n=3, b_idx=8)
+
+    bass_fore = BassForecast(S, n=3, b_idx=6, e_idx=10)
     res = bass_fore.run()
 
     print('1步向前预测:', end=' ')
     print('MAD:%.2f  MAPE:%.2f  MSE:%.2f' % res[0])
     print('3步向前预测:', end=' ')
     print('MAD:%.2f  MAPE:%.2f  MSE:%.2f' % res[1])
-    """ 
+    
