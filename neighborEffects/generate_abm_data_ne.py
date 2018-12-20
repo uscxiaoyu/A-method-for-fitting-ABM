@@ -29,7 +29,7 @@ if __name__ == '__main__':
     alpha_cont = [x['_id'] for x in prj.find(
         {"diffuse_curves": {"$exists": False}}, projection={'_id': 1})]
     for i, alpha in enumerate(alpha_cont):
-        mongo_date = prj.find_one({"_id": key})
+        mongo_date = prj.find_one({"_id": alpha})
         r_p = mongo_date['param_boundary']['p_range']
         r_q = mongo_date['param_boundary']['q_range']
         pq_cont = [(p, q) for p in np.linspace(r_p[0], r_p[1], num=10)

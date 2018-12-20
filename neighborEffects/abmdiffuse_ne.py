@@ -21,7 +21,10 @@ class Diffuse_ne(Diffuse):  # 默认网络结构为节点数量为10000，边为
     def decide(self, i):
         num_adopt_prede = sum([self.g.node[k]['state']
                                for k in self.g.node[i]['prede']])
-        mi = num_adopt_prede / (self.g.node[i]['num_prede'] ** self.alpha) if self.g.node[i]['num_prede'] else 0
+        if self.g.node[i]['num_prede']:
+            mi = num_adopt_prede/(self.g.node[i]['num_prede']**self.alpha)
+        else:
+            mi = 0
         prob = 1 - (1 - self.p)*(1 - self.q)**mi
         return prob > random.random()
 

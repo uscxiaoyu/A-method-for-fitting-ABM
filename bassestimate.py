@@ -32,7 +32,7 @@ class BassEstimate:
         p_list = []
         for pa in c_range:
             if isinstance(pa[0], float):
-                x = (pa[1] - pa[0]) * np.random.random(self.t_n) + pa[0]
+                x = (pa[1] - pa[0])*np.random.random(self.t_n) + pa[0]
             else:
                 x = np.random.randint(low=pa[0], high=pa[1] + 1, size=self.t_n)
             p_list.append(x)
