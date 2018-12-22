@@ -16,6 +16,10 @@ prj = db.neighEffects
 alpha_cont = [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1, 1.3, 1.5]
 
 #%%
+for p in prj.find({}):
+    print(p)
+
+#%%
 i = 0
 p, q, alpha = 0.005, 0.1, alpha_cont[i]
 t1 = time.perf_counter()
@@ -50,9 +54,9 @@ text = ax.text(20, np.max(S) * 0.1, f"{alpha_cont[i]}\np={p:.4f}, q={q:.4f}, m={
 
 #%%
 t1 = time.perf_counter()
-print(alpha_cont[i])
+alpha = 0.7
 p_cont = (0.0005, 0.03)
-q_cont = (0.08, 0.12)
+q_cont = (0.08*3, 0.12*3)
 delta = (0.001, 0.001)
 ger_samp = Gen_para_ne(alpha=alpha, p_cont=p_cont, q_cont=q_cont, delta=delta)
 bound = ger_samp.identify_range()
@@ -62,7 +66,8 @@ print(bound)
 #%% [markdown]
 #### 插入数据 
 #%%
-prj.insert_one({"_id": alpha, "para_boundary": bound})
+prj.update_one({"_id": alpha}, 
+                {"$set": {"param_boundary": bound}})
 
 #%%
 prj.find_one()
@@ -71,13 +76,19 @@ prj.find_one()
 #### 对[0.1, 0.3, 0.5, 0.7, 0.9, 1, 1.3, 1.5]
 
 #%%
-for j, alpha in enumerate(alpha_cont[1:], start=1):
+
+for j, alpha in enumerate(alpha_cont, start=1):
     t1 = time.perf_counter()
     print(j + 1, alpha)
     p_cont = (0.0005, 0.03)
-    q_cont = (0.08*6**alpha, 0.12*6**alpha)
-    delta = (0.001*6**alpha, 0.001*6**alpha)
+    q_cont = (0.08*3, 0.12*3)
+    delta = (0.001*5, 0.01*5)
     ger_samp = Gen_para_ne(alpha, p_cont=p_cont, q_cont=q_cont, delta=delta)
     bound = ger_samp.identify_range()
-    prj.insert_one({"_id": alpha, "para_boundary": bound})
+    prj.update_one({"_id": alpha}, 
+                    {"$set": {"param_boundary": bound}})
     print(f'  time: {time.perf_counter() - t1:.2f}s')
+
+
+#%%
+prj.update_many({}, {"$rename":{"para_boundary": "param_boundary"}})
