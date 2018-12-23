@@ -1,3 +1,4 @@
+# coding=utf-8
 import numpy as np
 import networkx as nx
 import time
@@ -7,7 +8,7 @@ import random
 class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随机网络
     def __init__(self, p, q, g=nx.gnm_random_graph(10000, 30000), num_runs=35):
         self.g = g.to_directed() if not nx.is_directed(g) else g
-        self.p = max(p, 5.0e-5)
+        self.p = max(p, 0.00005)
         self.q = q
         self.nodes_array = np.array(self.g)
         self.num_runs = num_runs

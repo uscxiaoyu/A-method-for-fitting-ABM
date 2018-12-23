@@ -13,13 +13,14 @@ class Gen_para:
         self.q_cont = q_cont
         self.d_p, self.d_q = delta
         self.g = g
+        self.num_nodes = self.g.number_of_nodes()
 
     def add_data(self, p, q):
         diff = Diffuse(p, q, g=self.g)
         x = np.mean(diff.repete_diffuse(), axis=0)
         max_idx = np.argmax(x)
         s = x[:(max_idx + 2)]
-        para_range = [[1e-6, 0.1], [1e-5, 0.8], [s, 4*self.g.number_of_nodes()]]
+        para_range = [[1e-6, 0.1], [1e-5, 0.8], [sum(s), 4*self.num_nodes]]
         bassest = BassEstimate(s, para_range)
         bassest.t_n = 1000
         res = bassest.optima_search(c_n=200, threshold=10e-6)
@@ -65,8 +66,10 @@ class Gen_para:
             if i == 20:
                 break
 
-        return {"p_range": [min_p, max_p], "q_range": [min_q, max_q],
-                "P_range": [min_P, max_P], "Q_range": [min_Q, max_Q]}
+        return {"p_range": [round(min_p, 5), round(max_p, 5)], 
+                "q_range": [round(min_q, 5), round(max_q, 5)],
+                "P_range": [round(min_P, 5), round(max_P, 5)], 
+                "Q_range": [round(min_Q, 5), round(max_Q, 5)]}
 
     def generate_sample(self, n_p=10, n_q=20):
         rg_p, rg_q = self.identify_range()
@@ -124,7 +127,7 @@ if __name__ == '__main__':
 
     bound_dict = {}
     for j, g in enumerate(g_cont):
-        t1 = time.clock()
+        t1 = time.perf_counter()
         print(j+1, txt_cont[j])
         p_cont = (0.0003, 0.02)  
         q_cont = (0.076*3.0/(j + 4), 0.12*3.0/(j + 4))  # 小心设置
@@ -132,4 +135,4 @@ if __name__ == '__main__':
         ger_samp = Gen_para(g=g, p_cont=p_cont, q_cont=q_cont, delta=delta)
         bound = ger_samp.identify_range()
         prj.insert_one({"_id": txt_cont[j], "para_boundary": bound})
-        print(f'  time: {time.clock() - t1:.2f}s')
+        print(f'  time: {time.perf_counter() - t1:.2f}s')
