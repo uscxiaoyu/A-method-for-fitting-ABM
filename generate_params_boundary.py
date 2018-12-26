@@ -8,15 +8,18 @@ import time
 
 
 class Gen_para:
-    def __init__(self, g, p_cont=(0.001, 0.02), q_cont=(0.08, 0.1), delta=(0.0005, 0.01)):
+    def __init__(self, p_cont=(0.001, 0.02), q_cont=(0.08, 0.1), alpha=0, 
+                 sigma=0, g=nx.gnm_random_graph(10000, 30000), delta=(0.0005, 0.01)):
         self.p_cont = p_cont
         self.q_cont = q_cont
         self.d_p, self.d_q = delta
         self.g = g
+        self.alpha = alpha
+        self.sigma = sigma
         self.num_nodes = self.g.number_of_nodes()
 
     def add_data(self, p, q):
-        diff = Diffuse(p, q, g=self.g)
+        diff = Diffuse(p, q, g=self.g, alpha=self.alpha, sigma=self.sigma)
         x = np.mean(diff.repete_diffuse(), axis=0)
         max_idx = np.argmax(x)
         s = x[:(max_idx + 2)]
@@ -83,12 +86,6 @@ def generate_random_graph(degre_sequance):
     G = nx.Graph(G)
     G.remove_edges_from(G.selfloop_edges())
     return G
-
-
-def func(p, q, g):
-    diff = Diffuse(p, q, g=g, num_runs=40)
-    x = np.mean(diff.repete_diffuse(), axis=0)
-    return np.concatenate(([p, q], x))
 
 
 if __name__ == '__main__':

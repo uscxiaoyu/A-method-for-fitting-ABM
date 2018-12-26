@@ -6,18 +6,34 @@ import random
 
 
 class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随机网络
-    def __init__(self, p, q, g=nx.gnm_random_graph(10000, 30000), num_runs=35):
+    def __init__(self, p, q, alpha=0, sigma=0, g=nx.gnm_random_graph(10000, 30000), num_runs=35):
+        '''
+        p: 创新系数
+        q: 模仿系数
+        alpha: 邻居效应
+        sigma: 个体差异性
+        g: 网络
+        num_runs: 仿真时间步
+        '''
         self.g = g.to_directed() if not nx.is_directed(g) else g
-        self.p = max(p, 0.00005)
-        self.q = q
         self.nodes_array = np.array(self.g)
         self.num_runs = num_runs
+        self.alpha = alpha
+        self.sigma = sigma
         for i in self.g:
             self.g.node[i]['prede'] = list(self.g.predecessors(i))
-    
+            self.g.node[i]['num_prede'] = len(self.g.node[i]['prede'])
+            self.g.node[i]['p'] = p*(1 + self.sigma*np.random.randn())
+            self.g.node[i]['q'] = q*(1 + self.sigma*np.random.randn())
+                 
     def decide(self, i):
         num_adopt_prede = sum([self.g.node[k]['state'] for k in self.g.node[i]['prede']])
-        prob = 1 - (1 - self.p)*(1 - self.q)**num_adopt_prede
+        prob = 1 - (1 - self.g.node[i]['p'])*(1 - self.g.node[i]['q'])**num_adopt_prede
+        if self.g.node[i]['num_prede']:
+            mi = num_adopt_prede/(self.g.node[i]['num_prede']**self.alpha)
+        else:
+            mi = 0
+        prob = 1 - (1 - self.g.node[i]['p'])*(1 - self.g.node[i]['q'])**mi
         return prob > random.random()
 
     def update(self, non_node_array):
@@ -46,10 +62,17 @@ class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随�
 
 
 if __name__ == '__main__':
+    import pylab as pl
     t1 = time.perf_counter()
     p, q = 0.001, 0.05
     diffu = Diffuse(p, q)
     diffu_cont = diffu.repete_diffuse(repetes=10)
     print(f"参数设置: p--{p}, q--{q} network--{diffu.g.number_of_nodes()}")
     print(f"用时{time.perf_counter() - t1:.2f}秒")
+    fig = pl.figure(figsize=(12, 6))
+    ax = fig.add_subplot(1, 1, 1)
+    for line in diffu_cont:
+        ax.plot(line, 'k-', lw=0.5, alpha=0.5)
+    ax.plot(np.mean(diffu_cont, axis=0), 'r-', lw=2)
+    pl.show()
 
