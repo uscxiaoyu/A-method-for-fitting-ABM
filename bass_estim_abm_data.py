@@ -1,6 +1,6 @@
 # coding=utf-8
 from pymongo import MongoClient
-import bassestimate as eb
+from bassestimate import BassEstimate
 import numpy as np
 import datetime
 import time
@@ -12,7 +12,7 @@ def func(x, n=1):
     s_full = x[2:]
     max_ix = np.argmax(s_full)
     s = s_full[:max_ix + 1 + n]
-    bassest = eb.BassEstimate(s)
+    bassest = BassEstimate(s)
     _, P, Q, M = bassest.optima_search(c_n=200, threshold=10e-6)
     r_2 = bassest.r2([P, Q, M])
     return [round(p, 5), round(q, 5), r_2, P, Q, M]

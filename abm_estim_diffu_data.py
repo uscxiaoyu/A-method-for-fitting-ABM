@@ -13,7 +13,7 @@ class EstimateABM:
     num_conds = 2  # 构建网格的节点个数
     k = 6  # 平均前继数量
 
-    def __init__(self, s, intv_p = 0.001, intv_q = 0.005, G=nx.gnm_random_graph(10000, 30000)):
+    def __init__(self, s, intv_p=0.001, intv_q=0.005, G=nx.gnm_random_graph(10000, 30000)):
         self.s = s
         self.s_len = len(s)
         self.intv_p = intv_p
@@ -36,21 +36,21 @@ class EstimateABM:
         b = -2*np.sum(x*self.s) / np.sum(self.s)
         c = np.sum(np.square(self.s)) / np.sum(self.s)
         mse = np.sqrt(sum(self.s) * (4*a*c - b**2) / (4*a*self.s_len))
-        sigma = -b / (2*a)
+        sigma = -b/(2*a)
         m = sigma*self.G.number_of_nodes()
-        return mse, p, q, m, list(x*sigma)
+        return [mse, p, q, m], list(x*sigma)
     
     def gener_grid(self, p, q):
         temp = {(p - self.intv_p, q - self.intv_q), 
-            (p, q - self.intv_q), 
-            (p + self.intv_p, q - self.intv_q),
-            (p - self.intv_p, q),
-            (p, q),       
-            (p + self.intv_p, q),
-            (p - self.intv_p, q + self.intv_q), 
-            (p, q + self.intv_q), 
-            (p + self.intv_p, q + self.intv_q)
-            }
+                (p, q - self.intv_q), 
+                (p + self.intv_p, q - self.intv_q),
+                (p - self.intv_p, q),
+                (p, q),       
+                (p + self.intv_p, q),
+                (p - self.intv_p, q + self.intv_q), 
+                (p, q + self.intv_q), 
+                (p + self.intv_p, q + self.intv_q)
+                }
         return temp
     
     def gener_p0_q0(self):  # 生成初始搜索点(p0,q0)
@@ -58,11 +58,11 @@ class EstimateABM:
         P0, Q0 = rgs.optima_search()[1 : 3]  # SABM最优点（P0,Q0）
         p_range = np.linspace(0.4*P0, P0, num=3)
         q_range = np.linspace(0.2*Q0/self.k, 0.6*Q0/self.k, num=3)
-        to_fit = {}    
+        to_fit = {}
         params_cont = []
         for p in p_range:  # 取9个点用于确定参数与估计值之间的联系
             for q in q_range:
-                diffu = Diffuse(p, q, self.s_len, self.G)
+                diffu = Diffuse(p, q, g=self.G, num_runs=self.s_len)
                 s_estim = diffu.repete_diffuse()
                 s_estim_avr = np.mean(s_estim, axis=0)
                 rgs_1 = BassEstimate(s_estim_avr)
@@ -80,48 +80,44 @@ class EstimateABM:
 
         p0 = result_p.params['P']*P0 + result_p.params['Q']*Q0
         q0 = result_q.params['P']*P0 + result_q.params['Q']*Q0
-        return p0,q0
+        return p0, q0
     
     def solution_search(self, p0, q0):
         solution_list = []
-        diff_list = []
         pq_set = self.gener_grid(p0, q0)
+        pq_trace = [pq_set]  # 初始化(p, q)的搜索轨迹
         for p, q in pq_set:
             p, q = round(p, 5), round(q, 5)  # 保留小数位，防止出错
             solution = self.get_M(p ,q)
-            solution_list.append(solution[:4]) # mse, p, q, s_M
-            diff_list.append(solution[4]) # 扩散曲线
+            solution_list.append(solution) # ([mse, p, q, s_M], [扩散曲线])
 
-        best_solution = sorted(solution_list)[:self.num_conds] 
+        best_solution = sorted(solution_list)[:self.num_conds]  # 选取num_conds个候选点
         while True:
-            solution_list2 = []
-            diff_list2 = []
             pq_set2 = set()
             for z in best_solution:  # 可以取多个作为候选最优解
-                temp = self.gener_grid(z[1], z[2])
+                temp = self.gener_grid(z[0][1], z[0][2])
                 pq_set2.update(temp)
 
-            new_points = pq_set2 - pq_set  # 集合减
-            for y in new_points:
-                solution = self.get_M(y[0], y[1])
-                solution_list2.append(solution[:4])
-                diff_list2.append(solution[4])
-
-            best_solution = sorted(solution_list2)[:self.num_conds]
-            opt_solution = best_solution[0]
-            opt_curve = diff_list2[solution_list2.index(opt_solution)]
-
-            if len(pq_set2) == len(pq_set):
+            new_points = pq_set2 - pq_set  # 集合减, 未包含在pd_set中的新(p, q)
+            if len(new_points) == 0:
                 break
             else:
-                solution_list = solution_list2
-                diff_list = diff_list2
-                pq_set = pq_set2
+                pq_trace.append(new_points)  # 将新增加的点添加到pq_trace中
+                solution_list2 = []
+                for y in new_points:
+                    solution = self.get_M(y[0], y[1])
+                    solution_list2.append(solution)
+
+                best_solution = sorted(solution_list2, key=lambda x : x[0][0])[:self.num_conds]
+                opt_solution = best_solution[0]
+                opt_curve = opt_solution[1]
+
+                solution_list.extend(solution_list2)
+                pq_set.update(new_points)
 
         f_act = opt_curve
-        R2 =self.r2(f_act)
-        search_steps = len(pq_set)
-        pq_trace = [z[1:3] for a in solution_list]
+        R2 = self.r2(f_act)
+        search_steps = len(pq_set)  # 搜索点的数量
         result = {'params': opt_solution[1:], 'fitness': R2,
                   'best_curve': f_act, 'steps': search_steps, 'path': pq_trace}  # [p,q,m], 拟合曲线, 搜索步数, 搜索范围
         return result
