@@ -17,6 +17,7 @@ def func(x, n=1):
     r_2 = bassest.r2([P, Q, M])
     return [round(p, 5), round(q, 5), r_2, P, Q, M]
 
+
 if __name__ == '__main__':
     client = MongoClient('localhost', 27017)
     db = client.abmDiffusion

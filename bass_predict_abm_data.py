@@ -16,13 +16,14 @@ def func(x, n=3):
     res = bass_fore.run()   # [1步向前, 3步向前预测]
     return [round(p, 5), round(q, 5), res[0], res[1]]
 
+
 if __name__ == "__main__":
     client = MongoClient('localhost', 27017)
     db = client.abmDiffusion
     prj = db.networks
     txt_cont = [x['_id'] for x in prj.find(
         {"forecasts": {"$exists": False}}, projection={'_id': 1})]
-    
+  
     for txt in txt_cont:
         all_data = prj.find_one({"_id": txt})
         diff_data = all_data["diffuse_curves"]
@@ -44,4 +45,3 @@ if __name__ == "__main__":
         print(f"{txt}: Time elapsed {(time.perf_counter() - t1):.2f}s")
         prj.update_one({"_id": txt}, {"$set": {"forecasts": {
                             "ctime": datetime.datetime.now(), **d_dict}}}, upsert=True)
-
