@@ -4,7 +4,7 @@ import datetime
 import numpy as np
 import multiprocessing
 from pymongo import MongoClient
-from bassestimate import BassEstimate, BassForecast
+from bassestimate import BassForecast
 
 
 def func(x, n=3):
