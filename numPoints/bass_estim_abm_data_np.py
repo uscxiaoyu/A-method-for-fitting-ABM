@@ -7,7 +7,7 @@ import time
 import multiprocessing
 
 
-def func(x, n=1):
+def func(x, n):
     p, q = x[:2]
     s_full = x[2:]
     max_ix = np.argmax(s_full)
@@ -20,19 +20,17 @@ def func(x, n=1):
 if __name__ == '__main__':
     client = MongoClient('localhost', 27017)
     db = client.abmDiffusion
-    prj = db.networks
-    txt_cont = [x['_id'] for x in prj.find({"estimates": {"$exists": False}}, projection={'_id': 1})]
-    for txt in txt_cont:
-        all_data = prj.find_one({"_id": txt})
+    all_data = db.networks.find_one({"_id": "gnm_random_graph(10000,30000)"}, projection={"diffuse_curves":1})
+    prj = db.numPoints
+    numpoints_cont = [-1, 0, 1, 2, 3, 4, 5]
+    for num_points in numpoints_cont:
         diff_data = all_data["diffuse_curves"]
         pool = multiprocessing.Pool(processes=5)
         result = []
         t1 = time.perf_counter()
-        i = 0
         for key in diff_data:
             d = np.array(diff_data[key])
-            result.append(pool.apply_async(func, (d,)))
-            i += 1
+            result.append(pool.apply_async(func, (d, num_points)))
 
         pool.close()
         pool.join()
@@ -41,5 +39,5 @@ if __name__ == '__main__':
             d = res.get()
             d_dict[str(d[:2])] = d
 
-        print(f"{txt}: Time elapsed {(time.perf_counter() - t1):.2f}s")
-        prj.update_one({"_id": txt}, {"$set": {"estimates": {"ctime": datetime.datetime.now(), **d_dict}}}, upsert=True)
+        print(f"{num_points}: Time elapsed {(time.perf_counter() - t1):.2f}s")
+        prj.insert_one({"_id": num_points},  {"estimates": {"ctime": datetime.datetime.now(), **d_dict}})

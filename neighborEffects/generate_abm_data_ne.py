@@ -1,5 +1,5 @@
 # coding=utf-8
-from abmdiffuse_ne import Diffuse_ne
+from abmdiffuse import Diffuse
 from pymongo import MongoClient
 import numpy as np
 import networkx as nx
@@ -17,7 +17,7 @@ def generate_random_graph(degre_sequance):
 def func(p, q, alpha):
     p = round(p, 5)
     q = round(q, 5)
-    diff = Diffuse_ne(p, q, alpha=alpha, num_runs=35)
+    diff = Diffuse(p, q, alpha=alpha, num_runs=35)
     x = np.mean(diff.repete_diffuse(), axis=0)
     return str([p, q]), list(np.concatenate(([p, q], x)))
 

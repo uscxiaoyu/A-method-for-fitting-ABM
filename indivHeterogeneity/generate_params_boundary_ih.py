@@ -8,10 +8,19 @@ import networkx as nx
 import time
 
 
+def func(p, q, g):
+    diff = Diffuse(p, q, g=g, num_runs=40)
+    x = np.mean(diff.repete_diffuse(), axis=0)
+    return np.concatenate(([p, q], x))
+
+
 if __name__ == '__main__':
     client = MongoClient('localhost', 27017)
     db = client.abmDiffusion
     prj = db.indivHeter
+
+    facebook_graph = nx.read_gpickle('dataSources/facebook.gpickle')
+    epinions_graph = nx.read_gpickle('dataSources/epinions.gpickle') 
 
     sigma_cont = [0.1, 0.2, 0.4, 0.6, 0.8, 1]
     for j, sigma in enumerate(sigma_cont):
