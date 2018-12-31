@@ -1,0 +1,5 @@
+.ipynb_checkpoints/
+_pycache_/
+settings.json
+*.cpython-37.pyc
+.vscode\
