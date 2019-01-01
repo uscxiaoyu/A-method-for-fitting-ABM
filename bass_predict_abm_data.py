@@ -20,7 +20,7 @@ def func(x, n=3):
 if __name__ == "__main__":
     client = MongoClient('localhost', 27017)
     db = client.abmDiffusion
-    prj = db.networks
+    prj = db.neighEffects
     txt_cont = [x['_id'] for x in prj.find(
         {"forecasts": {"$exists": False}}, projection={'_id': 1})]
   

@@ -13,8 +13,8 @@ db = client.abmDiffusion
 db.list_collection_names()
 
 #%%
-prj = db.networks
-prj.find_one({}, projection={"_id":1})
+prj = db.indivHeter
+prj.find_one({}, projection={"_id":1, "forecasts":1})
 
 #%%
 
