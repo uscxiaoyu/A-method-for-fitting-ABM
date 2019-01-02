@@ -1,0 +1,1 @@
+mongodb://yxmongo:xiaoyu%401986@abmdiffusion-shard-00-00-kk6qc.azure.mongodb.net:27017,abmdiffusion-shard-00-01-kk6qc.azure.mongodb.net:27017,abmdiffusion-shard-00-02-kk6qc.azure.mongodb.net:27017/test?ssl=false&replicaSet=abmDiffusion-shard-0&authSource=admin&retryWrites=true
