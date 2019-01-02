@@ -2,5 +2,6 @@ __pycache__/
 neighborEffects/__pycache__/
 .idea/
 .vscode/
-__pycache__/
 *.pyc
+.ipynb_checkpoints/
+settings.json
