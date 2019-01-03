@@ -17,6 +17,7 @@ prj = db.indivHeter
 prj.find_one({}, projection={"_id":1, "forecasts":1})
 
 #%%
+get_ipython().system('mongorestore -d abmDiffusion --dir "./abmDiffusion"')
 
 #%%
 get_ipython().system('mongodump -d abmDiffusion -o "./"')
