@@ -1,7 +1,7 @@
-.ipynb_checkpoints/
-_pycache_/
-settings.json
-*.cpython-37.pyc
-.vscode\
 __pycache__/
 neighborEffects/__pycache__/
+.idea/
+.vscode/
+*.pyc
+.ipynb_checkpoints/
+settings.json
