@@ -9,9 +9,8 @@ import time
 import random
 
 
-class EstimateABM:
+class estimateABM:
     num_conds = 2  # 构建网格的节点个数
-    k = 6  # 平均前继数量
 
     def __init__(self, s, intv_p=0.0005, intv_q=0.005, G=nx.gnm_random_graph(10000, 30000)):
         self.s = s
@@ -19,14 +18,17 @@ class EstimateABM:
         self.intv_p = intv_p
         self.intv_q = intv_q
         self.G = G
+        self.k = nx.number_of_edges(self.G) / nx.number_of_nodes(self.G)
+    
+    def __repr__(self):
+        return "<G: {0.G!r} s_len={0.s_len} d_p={0.intv_p} d_q={0.intv_q}>".format(self)
 
     def r2(self, f_act):
         f_act = np.array(f_act)
         tse = np.sum(np.square(self.s - f_act))
         mean_y = np.mean(self.s)
         ssl = np.sum(np.square(self.s - mean_y))
-        R_2 = (ssl - tse) / ssl
-        return R_2
+        return (ssl - tse)/ssl
 
     def get_M(self, p, q):  # 获取对应扩散率曲线的最优潜在市场容量
         diffu = Diffuse(p, q, g=self.G, num_runs=self.s_len)
@@ -58,7 +60,7 @@ class EstimateABM:
         rgs = BassEstimate(self.s)
         P0, Q0 = rgs.optima_search()[1 : 3]  # SABM最优点（P0,Q0）
         p_range = np.linspace(0.4*P0, P0, num=3)
-        q_range = np.linspace(0.2*Q0/self.k, 0.6*Q0/self.k, num=3)
+        q_range = np.linspace(0.2*Q0*self.k, 0.6*Q0*self.k, num=3)
         to_fit = {}
         params_cont = []
         for p in p_range:  # 取9个点用于确定参数与估计值之间的联系
@@ -68,14 +70,9 @@ class EstimateABM:
                 s_estim_avr = np.mean(s_estim, axis=0)
                 rgs_1 = BassEstimate(s_estim_avr)
                 P, Q = rgs_1.optima_search()[1 : 3]
-                params_cont.append([[p, q], [P, Q]])
+                params_cont.append([p, q, P, Q])
 
-        to_fit['p'] = [x[0][0] for x in params_cont]
-        to_fit['q'] = [x[0][1] for x in params_cont]
-        to_fit['P'] = [x[1][0] for x in params_cont]
-        to_fit['Q'] = [x[1][1] for x in params_cont]
-        to_fit = pd.DataFrame(to_fit)
-
+        to_fit = pd.DataFrame(params_cont, columns=['p', 'q', 'P', 'Q'])
         result_p = smf.ols('p~P+Q-1', data=to_fit).fit()
         result_q = smf.ols('q~P+Q-1', data=to_fit).fit()
 
@@ -102,7 +99,6 @@ class EstimateABM:
 
             new_points = pq_set2 - pq_set  # 集合减, 未包含在pd_set中的新(p, q)
             print(f"第{i}轮, 新增点个数:{len(new_points)}")
-            print(pq_set)
             if len(new_points) == 0:
                 break
             else:
@@ -152,7 +148,7 @@ if __name__ == '__main__':
     
     time1 = time.perf_counter()
     s = data_set["room air conditioners"][1]
-    est_abm = EstimateABM(s)
+    est_abm = estimateABM(s)
     p0, q0 = est_abm.gener_p0_q0()
     result = est_abm.solution_search(p0, q0)
     print(f'    Time elasped: {time.perf_counter()-time1:.2f} s')
@@ -164,7 +160,7 @@ if __name__ == '__main__':
         print(f'====================================={k}=====================================')
         time1 = time.perf_counter()
         s = data_set[k][1]
-        est_abm = EstimateABM(s)
+        est_abm = estimateABM(s)
         p0, q0 = est_abm.gener_p0_q0()
         estims, f_act, R2, steps, pq_set = est_abm.solution_search(p0,q0)
         est_dict[k] = {'p': estims[0], 'q': estims[1], 'm': estims[2],
