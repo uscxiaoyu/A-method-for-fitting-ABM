@@ -117,7 +117,7 @@ class estimateABM:
                   'fitness': R2,
                   'best_curve': opt_curve,  # 最优拟合曲线
                   'num_nodes': search_steps,    # 搜索点的数量
-                  'path': pq_trace,  # [{(p, q)}, ]的搜索轨迹
+                  'path': pq_trace,  # [{(p, q),}, ]的搜索轨迹
                   'hist': solution_list}
         return result
 
