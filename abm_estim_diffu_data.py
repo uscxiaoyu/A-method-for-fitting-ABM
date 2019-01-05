@@ -6,7 +6,6 @@ import pandas as pd
 import statsmodels.formula.api as smf
 import networkx as nx
 import time
-import random
 
 
 class estimateABM:
@@ -19,7 +18,7 @@ class estimateABM:
         self.intv_q = intv_q
         self.G = G
         self.k = nx.number_of_edges(self.G) / nx.number_of_nodes(self.G)
-    
+
     def __repr__(self):
         return "<G: {0.G!r} s_len={0.s_len} d_p={0.intv_p} d_q={0.intv_q}>".format(self)
 
@@ -56,11 +55,11 @@ class estimateABM:
                 }
         return temp
 
-    def gener_p0_q0(self):  # 生成初始搜索点(p0,q0)
+    def gener_init_pq(self):  # 生成初始搜索点(p0,q0)
         rgs = BassEstimate(self.s)
         P0, Q0 = rgs.optima_search()[1 : 3]  # SABM最优点（P0,Q0）
         p_range = np.linspace(0.4*P0, P0, num=3)
-        q_range = np.linspace(0.2*Q0*self.k, 0.6*Q0*self.k, num=3)
+        q_range = np.linspace(0.2*Q0/self.k, 0.6*Q0/self.k, num=3)
         to_fit = {}
         params_cont = []
         for p in p_range:  # 取9个点用于确定参数与估计值之间的联系
@@ -103,23 +102,23 @@ class estimateABM:
                 break
             else:
                 pq_trace.append(new_points)  # 将新增加的点添加到pq_trace中
-                solution_list2 = []
                 for y in new_points:
                     solution = self.get_M(y[0], y[1])
-                    solution_list2.append(solution)
+                    solution_list.append(solution)
 
-                best_solution = sorted(solution_list2, key=lambda x: x[0][0])[: self.num_conds]
-                opt_solution = best_solution[0]
-                opt_curve = opt_solution[1]  # p, q, m
-
-                solution_list.extend(solution_list2)
+                best_solution = sorted(solution_list, key=lambda x: x[0][0])[: self.num_conds]
+                opt_solution = best_solution[0]  # [mse, p, q, m], [扩散数据]
+                opt_curve = opt_solution[1]  # [扩散数据]
                 pq_set.update(new_points)
 
-        f_act = opt_curve
-        R2 = self.r2(f_act)
+        R2 = self.r2(opt_curve)
         search_steps = len(pq_set)  # 搜索点的数量
-        result = {'params': opt_solution[1:], 'fitness': R2,
-                  'best_curve': f_act, 'num_nodes': search_steps, 'path': pq_trace}  # [p,q,m], 拟合曲线, 搜索步数, 搜索范围
+        result = {'params': opt_solution[0][1:], # 估计值 [p, q, m]
+                  'fitness': R2,
+                  'best_curve': opt_curve,  # 最优拟合曲线
+                  'num_nodes': search_steps,    # 搜索点的数量
+                  'path': pq_trace,  # [{(p, q)}, ]的搜索轨迹
+                  'hist': solution_list}
         return result
 
 
@@ -129,12 +128,12 @@ if __name__ == '__main__':
             'color televisions':(np.arange(1963,1971),[747,1480,2646,5118,5777,5982,5962,4631]),
             'clothers dryers':(np.arange(1949,1962),[106,319,492,635,737,890,1397,1523,1294,1240,1425,1260,1236]),
             'ultrasound':(np.arange(1965,1979),[5,3,2,5,7,12,6,16,16,28,28,21,13,6]),
-            'mammography':(np.arange(1965,1979),[2,2,2,3,4,9,7,16,23,24,15,6,5,1]),
+            'mammography':(np.arange(1965,1979),[2, 2, 2, 3, 4, 9, 7, 16, 23, 24, 15,6,5,1]),
             'foreign language':(np.arange(1952,1964),[1.25,0.77,0.86,0.48,1.34,3.56,3.36,6.24,5.95,6.24,4.89,0.25]),
             'accelerated program':(np.arange(1952,1964),[0.67,0.48,2.11,0.29,2.59,2.21,16.80,11.04,14.40,
                                                          6.43,6.15,1.15])}
 
-    china_set = {'color televisions':(np.arange(1997,2013),[2.6,1.2,2.11,3.79,3.6,7.33,7.18,5.29,8.42,5.68,6.57,5.49,
+    china_set = {'color televisions': (np.arange(1997,2013),[2.6,1.2,2.11,3.79,3.6,7.33,7.18,5.29,8.42,5.68,6.57,5.49,
                                                             6.48,5.42,10.72,5.15]),
              'mobile phones':(np.arange(1997,2013),[1.7,1.6,3.84,12.36,14.5,28.89,27.18,21.33,25.6,15.88,12.3,6.84,
                                                     9.02,7.82,16.39,7.39]),
@@ -149,7 +148,7 @@ if __name__ == '__main__':
     time1 = time.perf_counter()
     s = data_set["room air conditioners"][1]
     est_abm = estimateABM(s)
-    p0, q0 = est_abm.gener_p0_q0()
+    p0, q0 = est_abm.gener_init_pq()
     result = est_abm.solution_search(p0, q0)
     print(f'    Time elasped: {time.perf_counter()-time1:.2f} s')
     print(f"    R2:{result['fitness']:.4f}    num_nodes:{result['num_nodes']}")
@@ -161,7 +160,7 @@ if __name__ == '__main__':
         time1 = time.perf_counter()
         s = data_set[k][1]
         est_abm = estimateABM(s)
-        p0, q0 = est_abm.gener_p0_q0()
+        p0, q0 = est_abm.gener_init_pq()
         estims, f_act, R2, steps, pq_set = est_abm.solution_search(p0,q0)
         est_dict[k] = {'p': estims[0], 'q': estims[1], 'm': estims[2],
                        'curve': f_act, 'r2': R2, 'path': pq_set}

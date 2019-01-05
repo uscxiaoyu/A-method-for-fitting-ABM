@@ -13,6 +13,7 @@ db = client.abmDiffusion
 db.list_collection_names()
 
 #%%
+db.networks.find_one().keys()
 
 #%%
 prj = db.indivHeter
