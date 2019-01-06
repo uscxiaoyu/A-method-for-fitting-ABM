@@ -17,7 +17,7 @@ def generate_random_graph(degre_sequance):
 def func(p, q, g):
     p = round(p, 5)
     q = round(q, 5)
-    diff = Diffuse(p, q, g=g, num_runs=35)
+    diff = Diffuse(p, q, g=g, num_runs=40)
     x = np.mean(diff.repete_diffuse(), axis=0)
     return str([p, q]), list(np.concatenate(([p, q], x)))
 
@@ -33,8 +33,7 @@ if __name__ == '__main__':
     epinions_graph = nx.read_gpickle('dataSources/epinions.gpickle')
     txt_cont = [x['_id'] for x in prj.find({}, projection={'_id': 1})]
 
-    prj2 = client.abmDatabase
-    
+    prj2 = db.abmDatabase  # 新建一个集合
     for i, key in enumerate(txt_cont):
         mongo_date = prj.find_one({"_id": key})
         r_p = mongo_date['param_boundary']['p_range']
