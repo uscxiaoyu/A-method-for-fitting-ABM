@@ -15,13 +15,15 @@ def generate_random_graph(degre_sequance):
 def insert_data(g, g_name, key, data_set):
     s = data_set[key][1]
     res = prj.find_one({"_id": g_name}, projection={key: 1})
-    len_res = 0 if not res else len(res[key])
+    if res:  # 查看有没有插入g_name，如果插入了，则查看是否存在res[key]
+        len_res = len(res.get(key, []))
+    else:
+        len_res = 0
     while len_res < 10:
         print(f"第{len_res + 1}轮:")
         t1 = time.perf_counter()
         est_abm = estimateABM(s, m_p=True)
         p0, q0 = est_abm.gener_init_pq()
-        t2 = time.perf_counter()
         result = est_abm.solution_search(p0, q0)
         t3 = time.perf_counter()
         print(f' 用时: {t3 - t1:.2f}秒')
@@ -34,9 +36,9 @@ def insert_data(g, g_name, key, data_set):
             prj.update_one({"_id": g_name}, {"$push": {key: str(result)}})
 
         res = prj.find_one({"_id": g_name}, projection={key: 1})
-        len_res = len(res[key])
+        len_res = len(res.get(key, []))
     else:
-        print(f"{g_name}任务已完成！")
+        print(f"  任务已完成！")
 
 
 if __name__ == '__main__':
@@ -65,7 +67,7 @@ if __name__ == '__main__':
 
     key = "color televisions"
     for i, g_name in enumerate(g_name_cont):
-        print(g_name)
+        print(i, g_name)
         if g_name in ['exponential_graph(10000,3)', 'gaussian_graph(10000,3)', 
                 'lognormal_graph(10000,3)', 'facebook_graph', 'epinions_graph']:
             g = eval(g_name)
