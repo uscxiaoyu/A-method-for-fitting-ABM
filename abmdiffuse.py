@@ -3,10 +3,11 @@ import numpy as np
 import networkx as nx
 import time
 import random
+import multiprocessing
 
 
 class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随机网络
-    def __init__(self, p, q, alpha=0, sigma=0, g=nx.gnm_random_graph(10000, 30000), num_runs=35):
+    def __init__(self, p, q, alpha=0, sigma=0, g=nx.gnm_random_graph(10000, 30000), num_runs=35, multi_proc=False):
         '''
         p: 创新系数
         q: 模仿系数
@@ -15,6 +16,7 @@ class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随�
         g: 网络
         num_runs: 仿真时间步
         '''
+        self.multi_proc = multi_proc
         self.g = g.to_directed() if not nx.is_directed(g) else g
         self.nodes_array = np.array(self.g)
         self.num_runs = num_runs
@@ -44,7 +46,7 @@ class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随�
             if self.decide(node):
                 self.g.node[node]['state'] = True
                 state_array[i] = True
-        return np.sum(state_array), non_node_array[state_array==False]
+        return np.sum(state_array), non_node_array[state_array == False]
 
     def single_diffuse(self):
         for i in self.g:
@@ -58,14 +60,27 @@ class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随�
         return num_of_adopt
 
     def repete_diffuse(self, repetes=10):  # 多次扩散
-        return [self.single_diffuse() for i in range(repetes)]
+        if self.multi_proc:
+            if repetes < 5:
+                pool = multiprocessing.Pool(processes=repetes)
+            else:
+                pool = multiprocessing.Pool(processes=5)
+            proc = []
+            for i in range(repetes):
+                proc.append(pool.apply_async(self.single_diffuse))
+
+            pool.close()
+            pool.join()
+            return [res.get() for res in proc]
+        else:
+            return [self.single_diffuse() for i in range(repetes)]
 
 
 if __name__ == '__main__':
     import pylab as pl
     t1 = time.perf_counter()
     p, q = 0.001, 0.05
-    diffu = Diffuse(p, q)
+    diffu = Diffuse(p, q, multi_proc=True)
     diffu_cont = diffu.repete_diffuse(repetes=10)
     print(f"参数设置: p--{p}, q--{q} network--{diffu.g.number_of_nodes()}")
     print(f"用时{time.perf_counter() - t1:.2f}秒")
@@ -75,4 +90,3 @@ if __name__ == '__main__':
         ax.plot(line, 'k-', lw=0.5, alpha=0.5)
     ax.plot(np.mean(diffu_cont, axis=0), 'r-', lw=2)
     pl.show()
-

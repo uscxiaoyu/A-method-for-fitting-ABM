@@ -5,3 +5,4 @@ neighborEffects/__pycache__/
 *.pyc
 .ipynb_checkpoints/
 settings.json
+pip upgrade.py
