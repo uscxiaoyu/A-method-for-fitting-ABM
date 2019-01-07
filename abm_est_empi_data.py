@@ -22,7 +22,7 @@ def insert_data(g, g_name, key, data_set):
     while len_res < 10:
         print(f"第{len_res + 1}轮:")
         t1 = time.perf_counter()
-        est_abm = estimateABM(s, m_p=True)
+        est_abm = estimateABM(s, G=g, m_p=True)
         p0, q0 = est_abm.gener_init_pq()
         result = est_abm.solution_search(p0, q0)
         t3 = time.perf_counter()
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     gauss_seq = np.load('dataSources/gaussian_sequance.npy')
     logno_seq = np.load('dataSources/lognormal_sequance.npy')
     facebook_graph = nx.read_gpickle('dataSources/facebook.gpickle')
-    epinions_graph = nx.read_gpickle('dataSources/epinions.gpickle')   
+    epinions_graph = nx.read_gpickle('dataSources/epinions.gpickle')  
     g_name_cont = ['barabasi_albert_graph(10000,3)', 'gnm_random_graph(10000,30000)', 
                 'watts_strogatz_graph(10000,6,0)', 'watts_strogatz_graph(10000,6,0.1)',
                 'watts_strogatz_graph(10000,6,0.3)', 'watts_strogatz_graph(10000,6,0.5)',
@@ -65,12 +65,14 @@ if __name__ == '__main__':
                 'exponential_graph(10000,3)', 'gaussian_graph(10000,3)', 
                 'lognormal_graph(10000,3)', 'facebook_graph', 'epinions_graph']
 
-    key = "color televisions"
-    for i, g_name in enumerate(g_name_cont):
-        print(i, g_name)
-        if g_name in ['exponential_graph(10000,3)', 'gaussian_graph(10000,3)', 
-                'lognormal_graph(10000,3)', 'facebook_graph', 'epinions_graph']:
-            g = eval(g_name)
-        else:
-            g = eval("nx." + g_name)
-        insert_data(g, g_name_cont[i], key, data_set)
+    for key in ["color televisions", "room air conditioners", "clothers dryers"]:
+        for i, g_name in enumerate(g_name_cont):
+            print(i, g_name)
+            if g_name in ['exponential_graph(10000,3)', 'gaussian_graph(10000,3)', 'lognormal_graph(10000,3)']:
+                graph = g_name[:5] + "_seq"
+                g = eval(graph)
+            elif g_name in ['facebook_graph', 'epinions_graph']:
+                g = eval(g_name)
+            else:
+                g = eval("nx." + g_name)
+            insert_data(g, g_name_cont[i], key, data_set)
