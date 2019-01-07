@@ -31,9 +31,12 @@ if __name__ == '__main__':
     logno_seq = np.load('dataSources/lognormal_sequance.npy')
     facebook_graph = nx.read_gpickle('dataSources/facebook.gpickle')
     epinions_graph = nx.read_gpickle('dataSources/epinions.gpickle')
-    txt_cont = [x['_id'] for x in prj.find({}, projection={'_id': 1})]
 
+    txt_cont = {x['_id'] for x in prj.find({}, projection={'_id': 1})}
     prj2 = db.abmDatabase  # 新建一个集合
+    e_cont = {x['_id'] for x in prj2.find({})}
+    txt_cont = list(txt_cont - e_cont)
+
     for i, key in enumerate(txt_cont):
         mongo_date = prj.find_one({"_id": key})
         r_p = mongo_date['param_boundary']['p_range']
@@ -64,4 +67,9 @@ if __name__ == '__main__':
 
         print(i + 1, key, f'Time: {(time.perf_counter() - t1):.2f} s')
         diffuse_curves = dict(data)
-        prj2.insert_one({"_id": key, "diffuse_curves": diffuse_curves})
+        new_curves = {}
+        for i, k in enumerate(diffuse_curves):
+            new_curves[str(i)] = diffuse_curves[k]
+
+        prj2.insert_one({"_id": key, "diffuse_curves": new_curves})
+        
