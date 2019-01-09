@@ -2,30 +2,29 @@
 #%%
 get_ipython().run_line_magic('pylab', 'inline')
 from pymongo import MongoClient
-from bassestimate import BassEstimate
-import numpy as np
-import datetime
-import time
 
 #%%
 client = MongoClient('localhost', 27017)
 
 #%%
-client.list_database_names()
+client.list_database_names()  # 列出所有的数据库
+
+#%%
+for i, d in enumerate(client.list_databases()):
+    print(i, f"{d['name']:<20}\t{d['sizeOnDisk']/(1024**2):.2f}M")
 
 #%%
 db = client.abmDiffusion
 db.list_collection_names()
 
 #%%
-db.networks.find_one().keys()
+# 删除数据库
+client.drop_database("abmDiffusion")
 
 #%%
-prj = db.abmEstimate
-prj.find_one({}, projection={"_id":1, "forecasts":1})
-
-#%%
+# 导入数据库
 get_ipython().system('mongorestore -d abmDiffusion --dir "./abmDiffusion"')
 
 #%%
+# 备份数据库
 get_ipython().system('mongodump -d abmDiffusion -o "./"')
