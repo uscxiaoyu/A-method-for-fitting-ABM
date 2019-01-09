@@ -9,6 +9,11 @@ import time
 
 #%%
 client = MongoClient('localhost', 27017)
+
+#%%
+client.list_database_names()
+
+#%%
 db = client.abmDiffusion
 db.list_collection_names()
 
@@ -16,7 +21,7 @@ db.list_collection_names()
 db.networks.find_one().keys()
 
 #%%
-prj = db.indivHeter
+prj = db.abmEstimate
 prj.find_one({}, projection={"_id":1, "forecasts":1})
 
 #%%
