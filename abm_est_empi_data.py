@@ -1,3 +1,4 @@
+# coding=utf-8
 from abmestimate import estimateABM
 from pymongo import MongoClient
 import networkx as nx
