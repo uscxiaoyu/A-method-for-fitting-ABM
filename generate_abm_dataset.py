@@ -36,6 +36,7 @@ if __name__ == '__main__':
     prj2 = db.abmDatabase  # 新建一个集合
     e_cont = {x['_id'] for x in prj2.find({})}
     txt_cont = list(txt_cont - e_cont)
+    print("剩余:", txt_cont)
 
     for i, key in enumerate(txt_cont):
         mongo_date = prj.find_one({"_id": key})
