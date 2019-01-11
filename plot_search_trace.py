@@ -4,15 +4,24 @@ import time
 import numpy as np
 import pylab as pl
 import random
-from abm_estim_diffu_data import estimateABM
+import pickle
+from abmestimate import estimateABM
+from matplotlib.ticker import ScalarFormatter
 get_ipython().run_line_magic('pylab', 'inline')
+
+#%%
+f = open("plot_trace.txt", 'rb')
+result = pickle.load(f)
+p0, q0 = 0.01159, 0.06075
+
+#%%
+year = np.arange(1949, 1962)  # clothers dryers
+s = [106, 319, 492, 635, 737, 890, 1397, 1523, 1294, 1240, 1425, 1260, 1236]
 
 #%%
 random.seed(999)
 np.random.seed(999)
 
-year = np.arange(1949, 1962)  # clothers dryers
-s = [106, 319, 492, 635, 737, 890, 1397, 1523, 1294, 1240, 1425, 1260, 1236]
 t1 = time.perf_counter()
 est_abm = estimateABM(s, m_p=True)
 p0, q0 = est_abm.gener_init_pq()
@@ -30,14 +39,7 @@ print(f"R2:{result['fitness']:.4f}    num_nodes:{result['num_nodes']}")
 result.keys()
 
 #%%
-print(f"Estimates:{result['params']}, r2:{result['fitness']}, number of nodes:{result['num_nodes']}")
-
-#%%
-pl.xlabel('Year')
-pl.ylabel('Number of Adopters')
-pl.plot(year, result['best_curve'], lw=2)
-pl.scatter(year, s, c='grey', s=20)
-
+print(f"Estimates:{result['params']}, r2:{result['fitness']:.4f}, number of nodes:{result['num_nodes']}")
 #%%
 p_range = [round(p0 + i * 0.001, 4) for i in range(-6, 18)]
 q_range = [round(q0 + i * 0.005, 4) for i in range(-12, 12)]
@@ -52,65 +54,55 @@ best_solution = tuple(result['params'][:-1])  # p, q
 his_cond = result['his_cond']
 
 #%%
+year = np.arange(1949, 1962)
+s = [106, 319, 492, 635, 737, 890, ]
+
+#%%
 # 绘图
-fig = pl.figure(figsize=(6, 6))
+pl.style.use('grayscale')
+fig = pl.figure(figsize=(10, 6))
 ax = fig.add_subplot(1, 1, 1)
-ax.set_xlabel('p', fontsize=15)
-ax.set_ylabel('q', fontsize=15)
-ax.set_xlim([min(p_range) - 0.001, max(p_range) + 0.001])
-ax.set_ylim([min(q_range) - 0.005, max(q_range) + 0.005])
+ax.set_xlabel('Year', fontsize=20)
+ax.set_ylabel('Number of Adopters', fontsize=20)
+ax.plot(year, result['best_curve'], lw=2,
+        color='red', label='Fitted curve of the ABM')
+ax.scatter(year, s, c='grey', s=40, alpha=0.5, label='Empirical data')
+ax.xaxis.set_major_formatter(ScalarFormatter(useOffset=True))
+ax.text(1949, 1000, "$R^2$=%.4f\n$\hat{p}$=%.5f,$\hat{q}$=%.5f,$\hat{m}$=%d" % (
+    result["fitness"], result['params'][0], result['params'][1], result['params'][2]), fontsize=12)
+ax.grid(False)
+ax.legend(loc='upper left', fontsize=15)
 
-for p in p_range:
-    for q in q_range:
-        ax.scatter(p, q, s=5, c='k', marker='o', alpha=0.1)
+inset_ax1 = fig.add_axes([0.575, 0.2, 0.15, 0.25], facecolor='#FCFAF2')
+inset_ax2 = fig.add_axes([0.73, 0.2, 0.15, 0.25], facecolor='#FCFAF2')
+ax_list = [inset_ax1, inset_ax2]
 
-for (p, q) in p_q_cont:
-    if (p, q) == best_solution:
-        ax.scatter(p, q, s=80, c='r', marker='*')
-    elif (p, q) == (p0, q0):
-        ax.scatter(p0, q0, s=50, c='b', marker='o')
-    else:
-        ax.scatter(p, q, s=20, c='k', marker='^', alpha=0.5)
-
-inset_ax1 = fig.add_axes([0.55, 0.73, 0.15, 0.15], facecolor='#FCFAF2')
-inset_ax2 = fig.add_axes([0.73, 0.73, 0.15, 0.15], facecolor='#FCFAF2')
-#inset_ax3 = fig.add_axes([0.55, 0.55, 0.15, 0.15], facecolor='#FCFAF2')
-#inset_ax4 = fig.add_axes([0.73, 0.55, 0.15, 0.15], facecolor='#FCFAF2')
-
-for z in result['path'][0]:
-    if z in result['his_cond'][0]:
-        inset_ax1.scatter(z[0], z[1], s=5, c='r', marker='o', alpha=1)
-    else:
-        inset_ax1.scatter(z[0], z[1], s=5, c='k', marker='o', alpha=1)
-
-inset_ax1.set_xlim([0.01, 0.015])
-inset_ax1.set_ylim([0.05, 0.088])
-inset_ax1.set_xlabel('Iteration 1', fontsize=10)
-inset_ax1.set_xticks([])
-inset_ax1.set_yticks([])
-
-ax_list = [inset_ax1, inset_ax2]#, inset_ax3, inset_ax4]
-
-for i in range(1, len(his_cond)):
+for i in range(len(his_cond)):
     ax = ax_list[i]
-    pq0 = set()
-    for j in range(i):
-        pq0.update(result['path'][j])
+    pq_set = set()
+    for j in range(i+1):
+        pq_set.update(result['path'][j])
 
-    pq1 = result['path'][i]
-    for z in pq0:
-        ax.scatter(z[0], z[1], s=5, c='k', marker='o', alpha=0.2)
-
-    for z in pq1:
-        if z not in his_cond[i]:
-            ax.scatter(z[0], z[1], s=5, c='k', marker='o', alpha=1)
-
-    for z in his_cond[i]:
-        ax.scatter(z[0], z[1], s=5, c='r', marker='s', alpha=1)
+    for z in pq_set:
+        if z == (p0, q0):
+            ax.scatter(z[0], z[1], s=60, c='w',
+                       edgecolors='k', marker='o', alpha=0.5)
+        elif z in his_cond[i]:
+            if z == best_solution and i == len(his_cond) - 1:
+                ax.scatter(z[0], z[1], s=60, c='r', marker='*')
+            else:
+                ax.scatter(z[0], z[1], s=30, c='r', marker='^', alpha=1)
+        elif z in result['path'][i]:
+            ax.scatter(z[0], z[1], s=30, c='k', marker='s', alpha=1)
+        else:
+            ax.scatter(z[0], z[1], s=30, c='k', marker='s', alpha=0.2)
 
     ax.set_xlim([0.01, 0.015])
-    ax.set_ylim([0.05, 0.088])
-    ax.set_xlabel('Iteration %s' % (i+1), fontsize=10)
+    ax.set_ylim([0.05, 0.08])
+    ax.set_title('Iteration %s' % (i+1), fontsize=15)
+    ax.set_xlabel('p')
+    if i == 0:
+        ax.set_ylabel('q')
     ax.set_xticks([])
     ax.set_yticks([])
 
@@ -126,15 +118,9 @@ his_cond
 result['path'][0]
 
 #%%
-import pickle
-
 f = open("plot_trace.txt", 'wb')
 pickle.dump(result, f)
 f.close()
-
-#%%
-f = open("plot_trace.txt", 'rb')
-res = pickle.load(f)
 
 #%%
 res['path']
