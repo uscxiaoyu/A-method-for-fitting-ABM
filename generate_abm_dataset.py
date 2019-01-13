@@ -4,6 +4,7 @@ from pymongo import MongoClient
 import numpy as np
 import networkx as nx
 import time
+import datetime
 import multiprocessing
 
 
@@ -39,6 +40,8 @@ if __name__ == '__main__':
     print("剩余:", txt_cont)
 
     for i, key in enumerate(txt_cont):
+        print(key)
+        print("  开始时间", format(datetime.datetime.now()))
         mongo_date = prj.find_one({"_id": key})
         r_p = mongo_date['param_boundary']['p_range']
         r_q = mongo_date['param_boundary']['q_range']
@@ -73,4 +76,5 @@ if __name__ == '__main__':
             new_curves[str(i)] = diffuse_curves[k]
 
         prj2.insert_one({"_id": key, "diffuse_curves": new_curves})
+        print("  结束时间", format(datetime.datetime.now()))
         

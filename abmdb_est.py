@@ -1,10 +1,12 @@
 #coding=utf-8
-
+#%%
+get_ipython().run_line_magic('pylab', 'inline')
 from pymongo import MongoClient
 import numpy as np
 import pylab as pl
 import pandas as pd
 
+#%%
 class abmDBfit:
     
     def __init__(self, s_data, db):
@@ -29,12 +31,13 @@ class abmDBfit:
         s: 待拟合数据
         d: 数据库中的曲线
         '''
+        s, d = np.array(s), np.array(d)
         s_len = len(s)
         p, q = d[:2]
         if s_len > len(d[2:]):
             raise Exception("待拟合数据超过长度!")
         else:
-            x = d[2:][:s_len]
+            x = d[2 : 2+s_len]
 
         a = np.sum(np.square(x)) / np.sum(s)  # 为减少a的大小, 除以np.sum(self.s)
         b = -2*np.sum(x*s) / np.sum(s)
@@ -66,28 +69,35 @@ class abmDBfit:
             one_step.append([delta/s[i+1], delta, delta**2])
         return one_step
 
+#%%
+#if __name__ == "__main__":
+client = MongoClient()
+database = client.abmDiffusion
+prj = database.abmDatabase
 
-if __name__ == "__main__":
-    client = MongoClient()
-    database = client.abmDiffusion
-    prj = db.abmDatabase
+#%%
+s_dict = {'room air conditioners':(np.arange(1949, 1962), 
+                [96, 195, 238, 380, 1045, 1230, 1267, 1828, 1586, 1673, 1800, 1580, 1500]),
+            'color televisions':(np.arange(1963,1971),
+                [747,1480,2646,5118,5777,5982,5962,4631]),
+            'clothers dryers':(np.arange(1949,1962),
+                [106,319,492,635,737,890,1397,1523,1294,1240,1425,1260,1236])
+                }
 
-    s_dict = {'room air conditioners':(np.arange(1949, 1962), 
-                    [96, 195, 238, 380, 1045, 1230, 1267, 1828, 1586, 1673, 1800, 1580, 1500]),
-                'color televisions':(np.arange(1963,1971),
-                    [747,1480,2646,5118,5777,5982,5962,4631]),
-                'clothers dryers':(np.arange(1949,1962),
-                    [106,319,492,635,737,890,1397,1523,1294,1240,1425,1260,1236])
-                    }
-
-    #db_cont = [x["_id"] for x in prj.find({})]
-    db = prj.find({"_id": 'barabasi_albert_graph(10000,3)'})
-    s = s_dict["color televisions"][1]
-    abm = abmDBfit(s, db)
-    res = abm.fit()
-    p, q, m = res[0]
-    s_fit = res[1]
-    r2 = abm.squr_r(s_fit)
-
-
-    
+#%%
+#db_cont = [x["_id"] for x in prj.find({})]
+db = prj.find_one({"_id": 'barabasi_albert_graph(10000,3)'})
+s = s_dict["color televisions"][1]
+#%%
+db["diffuse_curves"]['0']
+#%%
+abm = abmDBfit(s, db)
+res = abm.fit()
+_, p, q, m = res[0]
+s_fit = res[1]
+#%%
+print(p, q, m)
+#%%
+r2 = abm.squr_r(s_fit)
+#%%
+pl.plot(db["diffuse_curves"]['100'])
