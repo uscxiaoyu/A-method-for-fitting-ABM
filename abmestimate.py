@@ -33,6 +33,8 @@ class estimateABM:
     def get_M(self, p, q):  # 获取对应扩散率曲线的最优潜在市场容量
         if p <= 0:
             raise Exception(f"p={p}小于0!")
+        elif q <= 0:
+            raise Exception(f"q={q}小于0!")
         else:
             diffu = Diffuse(p, q, g=self.G, num_runs=self.s_len, multi_proc=self.m_p)
             s_estim = diffu.repete_diffuse()
