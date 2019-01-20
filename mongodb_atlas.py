@@ -5,9 +5,8 @@ print(connect_string)
 
 #%%
 from pymongo import MongoClient
-get_ipython().run_line_magic('pylab', 'inline')
-client = MongoClient("mongodb+srv: // abmdiffusion-kk6qc.azure.mongodb.net/test --username yxmongo")
-
+client = MongoClient(
+    "mongodb+srv://yxmongo:xiaoyu%401986@cluster0.mongodb.net/admin")
 #%%
 db = client.abmDiffusion
 
