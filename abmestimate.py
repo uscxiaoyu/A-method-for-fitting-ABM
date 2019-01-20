@@ -31,26 +31,34 @@ class estimateABM:
         return (ssl - tse)/ssl
 
     def get_M(self, p, q):  # 获取对应扩散率曲线的最优潜在市场容量
-        diffu = Diffuse(p, q, g=self.G, num_runs=self.s_len, multi_proc=self.m_p)
-        s_estim = diffu.repete_diffuse()
-        x = np.mean(s_estim, axis=0)
-        a = np.sum(np.square(x)) / np.sum(self.s)  # 除以np.sum(self.s)是为减少a的大小
-        b = -2*np.sum(x*self.s) / np.sum(self.s)
-        c = np.sum(np.square(self.s)) / np.sum(self.s)
-        mse = np.sqrt(sum(self.s) * (4*a*c - b**2) / (4*a*self.s_len))
-        sigma = -b/(2*a)
-        m = sigma*self.G.number_of_nodes()
-        return [mse, p, q, m], list(x*sigma)
+        if p <= 0:
+            raise Exception(f"p={p}小于0!")
+        else:
+            diffu = Diffuse(p, q, g=self.G, num_runs=self.s_len, multi_proc=self.m_p)
+            s_estim = diffu.repete_diffuse()
+            x = np.mean(s_estim, axis=0)
+            a = np.sum(np.square(x)) / np.sum(self.s)  # 除以np.sum(self.s)是为减少a的大小
+            b = -2*np.sum(x*self.s) / np.sum(self.s)
+            c = np.sum(np.square(self.s)) / np.sum(self.s)
+            mse = np.sqrt(sum(self.s) * (4*a*c - b**2) / (4*a*self.s_len))
+            sigma = -b/(2*a)
+            m = sigma*self.G.number_of_nodes()
+            return [mse, p, q, m], list(x*sigma)
 
     def gener_grid(self, p, q):
         p, q = round(p, 5), round(q, 5)
-        temp = {(round(p - self.intv_p, 5), round(q - self.intv_q, 5)),
-                (round(p, 5), round(q - self.intv_q, 5)),
-                (round(p + self.intv_p, 5), round(q - self.intv_q, 5)),
-                (round(p - self.intv_p, 5), round(q, 5)),
+        temp = {(round(p - self.intv_p, 5) if p > self.intv_p else round(p/2, 5), 
+                    round(q - self.intv_q, 5) if q > self.intv_q else round(q/2, 5)),
+                (round(p, 5),
+                    round(q - self.intv_q, 5) if q > self.intv_q else round(q/2, 5)),
+                (round(p + self.intv_p, 5),
+                    round(q - self.intv_q, 5) if q > self.intv_q else round(q/2, 5)),
+                (round(p - self.intv_p, 5) if p > self.intv_p else round(p/2, 5), 
+                    round(q, 5)),
                 (round(p, 5), round(q, 5)),
                 (round(p + self.intv_p, 5), round(q, 5)),
-                (round(p - self.intv_p, 5), round(q + self.intv_q, 5)),
+                (round(p - self.intv_p, 5) if p > self.intv_p else round(p/2, 5), 
+                    round(q + self.intv_q, 5)),
                 (round(p, 5), round(q + self.intv_q, 5)),
                 (round(p + self.intv_p, 5), round(q + self.intv_q, 5))
                 }
@@ -85,8 +93,11 @@ class estimateABM:
         pq_set = self.gener_grid(p0, q0)
         pq_trace = [pq_set.copy()]  # 初始化(p, q)的搜索轨迹，set().copy()得到新的对象
         for p, q in pq_set:
-            solution = self.get_M(p, q)
-            solution_list.append(solution)  # ([mse, p, q, s_M], [扩散曲线])
+            try:
+                solution = self.get_M(p, q)
+                solution_list.append(solution)  # ([mse, p, q, s_M], [扩散曲线])
+            except Exception:
+                print(f"p:{p}, q:{q}, 不搜索！")
 
         best_solution = sorted(solution_list)[:self.num_conds]  # 选取num_conds个候选点
         condidate_points = [(z[0][1], z[0][2]) for z in best_solution]
@@ -106,8 +117,11 @@ class estimateABM:
             else:
                 pq_trace.append(new_points)  # 将新增加的点添加到pq_trace中
                 for y in new_points:
-                    solution = self.get_M(y[0], y[1])
-                    solution_list.append(solution)
+                    try:
+                        solution = self.get_M(y[0], y[1])
+                        solution_list.append(solution)
+                    except Exception:
+                        print(f"p:{p}, q:{q}, 不搜索！")
 
                 best_solution = sorted(solution_list, key=lambda x: x[0][0])[: self.num_conds]
                 condidate_points = [(z[0][1], z[0][2]) for z in best_solution]

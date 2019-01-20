@@ -56,7 +56,7 @@ if __name__ == '__main__':
     gauss_seq = np.load('dataSources/gaussian_sequance.npy')
     logno_seq = np.load('dataSources/lognormal_sequance.npy')
     facebook_graph = nx.read_gpickle('dataSources/facebook.gpickle')
-    epinions_graph = nx.read_gpickle('dataSources/epinions.gpickle')  
+    epinions_graph = nx.read_gpickle('dataSources/epinions.gpickle')
     g_name_cont = ['barabasi_albert_graph(10000,3)', 'gnm_random_graph(10000,30000)', 
                 'watts_strogatz_graph(10000,6,0)', 'watts_strogatz_graph(10000,6,0.1)',
                 'watts_strogatz_graph(10000,6,0.3)', 'watts_strogatz_graph(10000,6,0.5)',
