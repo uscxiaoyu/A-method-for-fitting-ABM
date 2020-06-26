@@ -12,6 +12,11 @@ for i, d in enumerate(client.list_databases()):
 db = client.abmDiffusion
 db.list_collection_names()
 #%%
+x = db.numPoints.find({})
+for i in x:
+    print(i)
+
+#%%
 # 删除数据库
 # client.drop_database("abmDiffusion")
 #%%
