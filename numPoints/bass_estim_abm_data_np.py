@@ -22,7 +22,7 @@ if __name__ == '__main__':
     db = client.abmDiffusion
     all_data = db.networks.find_one({"_id": "gnm_random_graph(10000,30000)"}, projection={"diffuse_curves":1})
     prj = db.numPoints
-    numpoints_cont = [-1, 0, 1, 2, 3, 4, 5]
+    numpoints_cont = [0, 1, 2, 3, 4, 5]
     for num_points in numpoints_cont:
         diff_data = all_data["diffuse_curves"]
         pool = multiprocessing.Pool(processes=5)
@@ -39,5 +39,5 @@ if __name__ == '__main__':
             d = res.get()
             d_dict[str(d[:2])] = d
 
-        print(f"{num_points}: Time elapsed {(time.perf_counter() - t1):.2f}s")
-        prj.insert_one({"_id": num_points},  {"estimates": {"ctime": datetime.datetime.now(), **d_dict}})
+        print(f"Peak adoption {num_points}: Time elapsed {(time.perf_counter() - t1):.2f}s")
+        prj.update_one({"_id": num_points},  {"$set": {"estimates": {"ctime": datetime.datetime.now(), **d_dict}}})
