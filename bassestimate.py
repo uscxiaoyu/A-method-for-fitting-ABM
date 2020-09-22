@@ -32,7 +32,7 @@ class BassEstimate:
         p_list = []
         for pa in c_range:
             if isinstance(pa[0], float):
-                x = (pa[1] - pa[0]) * np.random.random(self.t_n) + pa[0]
+                x = (pa[1] - pa[0]) * np.random.rand(self.t_n) + pa[0]
             else:
                 x = np.random.randint(low=pa[0], high=pa[1] + 1, size=self.t_n)
             p_list.append(x)
@@ -175,7 +175,7 @@ if __name__ == "__main__":
             [1.7, 1.6, 3.84, 12.36, 14.5, 28.89, 27.18, 21.33, 25.6, 15.88, 12.3, 6.84, 9.02, 7.82, 16.39, 7.39],
         ),
     }
-    S = data_set["clothers dryers"][1]
+    S = data_set["color televisions"][1]
 
     m_idx = np.argmax(S)
     s = S[: m_idx + 2]
