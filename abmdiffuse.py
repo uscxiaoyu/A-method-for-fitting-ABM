@@ -23,19 +23,19 @@ class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随�
         self.alpha = alpha
         self.sigma = sigma
         for i in self.g:
-            self.g.node[i]['prede'] = list(self.g.predecessors(i))
-            self.g.node[i]['num_prede'] = len(self.g.node[i]['prede'])
-            self.g.node[i]['p'] = p*(1 + self.sigma*np.random.randn())
-            self.g.node[i]['q'] = q*(1 + self.sigma*np.random.randn())
+            self.g.nodes[i]['prede'] = list(self.g.predecessors(i))
+            self.g.nodes[i]['num_prede'] = len(self.g.nodes[i]['prede'])
+            self.g.nodes[i]['p'] = p*(1 + self.sigma*np.random.randn())
+            self.g.nodes[i]['q'] = q*(1 + self.sigma*np.random.randn())
                  
     def decide(self, i):
-        num_adopt_prede = sum([self.g.node[k]['state'] for k in self.g.node[i]['prede']])
-        prob = 1 - (1 - self.g.node[i]['p'])*(1 - self.g.node[i]['q'])**num_adopt_prede
-        if self.g.node[i]['num_prede']:
-            mi = num_adopt_prede/(self.g.node[i]['num_prede']**self.alpha)
+        num_adopt_prede = sum([self.g.nodes[k]['state'] for k in self.g.nodes[i]['prede']])
+        prob = 1 - (1 - self.g.nodes[i]['p'])*(1 - self.g.nodes[i]['q'])**num_adopt_prede
+        if self.g.nodes[i]['num_prede']:
+            mi = num_adopt_prede/(self.g.nodes[i]['num_prede']**self.alpha)
         else:
             mi = 0
-        prob = 1 - (1 - self.g.node[i]['p'])*(1 - self.g.node[i]['q'])**mi
+        prob = 1 - (1 - self.g.nodes[i]['p'])*(1 - self.g.nodes[i]['q'])**mi
         return prob > random.random()
 
     def update(self, non_node_array):
@@ -44,13 +44,13 @@ class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随�
         for i in range(len_nodes):
             node = non_node_array[i]
             if self.decide(node):
-                self.g.node[node]['state'] = True
+                self.g.nodes[node]['state'] = True
                 state_array[i] = True
         return np.sum(state_array), non_node_array[state_array == False]
 
     def single_diffuse(self):
         for i in self.g:
-            self.g.node[i]['state'] = False
+            self.g.nodes[i]['state'] = False
         non_node_array = self.nodes_array[:]
         num_of_adopt = []
         for i in range(self.num_runs):
@@ -78,6 +78,7 @@ class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随�
 
 if __name__ == '__main__':
     import pylab as pl
+    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
     t1 = time.perf_counter()
     p, q = 0.001, 0.05
     diffu = Diffuse(p, q, multi_proc=True)
