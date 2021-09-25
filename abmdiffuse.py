@@ -27,7 +27,7 @@ class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随�
             self.g.nodes[i]['num_prede'] = len(self.g.nodes[i]['prede'])
             self.g.nodes[i]['p'] = p*(1 + self.sigma*np.random.randn())
             self.g.nodes[i]['q'] = q*(1 + self.sigma*np.random.randn())
-                 
+
     def decide(self, i):
         num_adopt_prede = sum([self.g.nodes[k]['state'] for k in self.g.nodes[i]['prede']])
         prob = 1 - (1 - self.g.nodes[i]['p'])*(1 - self.g.nodes[i]['q'])**num_adopt_prede
@@ -77,7 +77,7 @@ class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随�
 
 
 if __name__ == '__main__':
-    import pylab as pl
+    import matplotlib.pyplot as plt
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
     t1 = time.perf_counter()
     p, q = 0.001, 0.05
@@ -85,9 +85,9 @@ if __name__ == '__main__':
     diffu_cont = diffu.repete_diffuse(repetes=10)
     print(f"参数设置: p--{p}, q--{q} network--{diffu.g.number_of_nodes()}")
     print(f"用时{time.perf_counter() - t1:.2f}秒")
-    fig = pl.figure(figsize=(12, 6))
+    fig = plt.figure(figsize=(12, 6))
     ax = fig.add_subplot(1, 1, 1)
     for line in diffu_cont:
-        ax.plot(line, 'k-', lw=0.5, alpha=0.5)
+        ax.scatter(np.arange(diffu.num_runs), line, color='grey', s=10, alpha=0.5)
     ax.plot(np.mean(diffu_cont, axis=0), 'r-', lw=2)
-    pl.show()
+    plt.show()
