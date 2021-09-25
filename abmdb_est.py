@@ -70,6 +70,7 @@ class abmDBfit:
 
 
 if __name__ == "__main__":
+    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
     s_dict = {'room air conditioners':(np.arange(1949, 1962), 
                 [96, 195, 238, 380, 1045, 1230, 1267, 1828, 1586, 1673, 1800, 1580, 1500]),
         'color televisions':(np.arange(1963,1971),

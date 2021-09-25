@@ -146,6 +146,7 @@ class estimateABM:
 
 if __name__ == '__main__':
     import pylab as pl
+    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
     data_set = {'room air conditioners':(np.arange(1949, 1962), [96, 195, 238, 380, 1045, 1230, 1267, 1828, 1586,
                                                                1673, 1800, 1580, 1500]),
             'color televisions':(np.arange(1963,1971),[747,1480,2646,5118,5777,5982,5962,4631]),
@@ -168,10 +169,10 @@ if __name__ == '__main__':
                                                     1.8,5.48,1.35,1.47,0.52,1.03,3.28,-1.4,1.72,1.26,0.62,1.25])
              }
 
-    txt = "color televisions"
+    txt = "mobile phones"
     t1 = time.perf_counter()
-    s = data_set[txt][1]
-    year = data_set[txt][0]
+    s = china_set[txt][1]
+    year = china_set[txt][0]
     est_abm = estimateABM(s,)
     p0, q0 = est_abm.gener_init_pq()
     t2 = time.perf_counter()

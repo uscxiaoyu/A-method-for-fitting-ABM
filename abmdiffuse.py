@@ -42,9 +42,9 @@ class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随�
         len_nodes = len(non_node_array)
         state_array = np.zeros(len_nodes, dtype=np.bool)
         for i in range(len_nodes):
-            nodes = non_node_array[i]
-            if self.decide(nodes):
-                self.g.nodes[nodes]['state'] = True
+            node = non_node_array[i]
+            if self.decide(node):
+                self.g.nodes[node]['state'] = True
                 state_array[i] = True
         return np.sum(state_array), non_node_array[state_array == False]
 
