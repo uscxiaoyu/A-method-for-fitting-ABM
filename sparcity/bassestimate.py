@@ -175,7 +175,7 @@ if __name__ == "__main__":
             [1.7, 1.6, 3.84, 12.36, 14.5, 28.89, 27.18, 21.33, 25.6, 15.88, 12.3, 6.84, 9.02, 7.82, 16.39, 7.39],
         ),
     }
-    S = data_set["room air conditioners"][1]
+    S = data_set["color televisions"][1]
 
     m_idx = np.argmax(S)
     s = S[: m_idx + 2]
@@ -186,7 +186,6 @@ if __name__ == "__main__":
     r_2 = bassest.r2([P, Q, M])
     print(f"Time elapsed: {(time.process_time() - t1) : .2f}s")
     print("==================================================")
-    print(f"mse: {mse:.2f}")
     print(f"P:{P:.4f}   Q:{Q:.4f}   M:{M:.0f}\nr^2:{r_2:.4f}")
 
     # bass_fore = BassForecast(S, n=3, b_idx=6, e_idx=10)

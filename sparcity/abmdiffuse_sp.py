@@ -1,10 +1,10 @@
 # coding=utf-8
+import multiprocessing
 import numpy as np
 import networkx as nx
 import time
 import random
 import multiprocessing
-
 
 class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随机网络
     def __init__(self, p, q, alpha=0, sigma=0, g=nx.gnm_random_graph(10000, 30000), num_runs=35, multi_proc=False):
@@ -40,7 +40,7 @@ class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随�
 
     def update(self, non_node_array):
         len_nodes = len(non_node_array)
-        state_array = np.zeros(len_nodes, dtype=bool)
+        state_array = np.zeros(len_nodes, dtype=np.bool)
         for i in range(len_nodes):
             node = non_node_array[i]
             if self.decide(node):
@@ -75,19 +75,10 @@ class Diffuse:  # 默认网络结构为节点数量为10000，边为30000的随�
         else:
             return [self.single_diffuse() for i in range(repetes)]
 
-
 if __name__ == '__main__':
-    import matplotlib.pyplot as plt
-    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
     t1 = time.perf_counter()
-    p, q = 0.001, 0.05
-    diffu = Diffuse(p, q, multi_proc=True)
+    p, q, alpha = 0.01, 0.5, 0
+    diffu = Diffuse(p, q, alpha=alpha)
     diffu_cont = diffu.repete_diffuse(repetes=10)
-    print(f"参数设置: p--{p}, q--{q} network--{diffu.g.number_of_nodes()}")
+    print(f"参数设置: p--{p}, q--{q}, alpha--{alpha} network--{diffu.g.number_of_nodes()}")
     print(f"用时{time.perf_counter() - t1:.2f}秒")
-    fig = plt.figure(figsize=(12, 6))
-    ax = fig.add_subplot(1, 1, 1)
-    for line in diffu_cont:
-        ax.scatter(np.arange(diffu.num_runs), line, color='grey', s=10, alpha=0.5)
-    ax.plot(np.mean(diffu_cont, axis=0), 'r-', lw=2)
-    plt.show()
