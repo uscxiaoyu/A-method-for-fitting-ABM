@@ -18,7 +18,7 @@ def func(x, n=1):
     return [round(p, 5), round(q, 5), r_2, P, Q, M]
 
 if __name__ == '__main__':
-    client = MongoClient('localhost', 27017)
+    client = MongoClient('106.14.27.147')
     db = client.abmDiffusion
     prj = db.neighEffects
     alpha_cont = [x['_id'] for x in prj.find(

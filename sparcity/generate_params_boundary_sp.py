@@ -79,7 +79,7 @@ class Gen_para:
 
 
 if __name__ == '__main__':
-    client = MongoClient('localhost', 27017)
+    client = MongoClient('106.14.27.147')
     db = client.abmDiffusion
     prj = db.sparcity
     bound_dict = {}

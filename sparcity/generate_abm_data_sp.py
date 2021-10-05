@@ -23,7 +23,7 @@ def func(p, q, alpha):
 
 
 if __name__ == '__main__':
-    client = MongoClient('localhost', 27017)
+    client = MongoClient('106.14.27.147')
     db = client.abmDiffusion
     prj = db.neighEffects
     alpha_cont = [x['_id'] for x in prj.find(

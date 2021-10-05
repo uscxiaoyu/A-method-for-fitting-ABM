@@ -74,36 +74,59 @@ if __name__ == "__main__":
     delta_q = 0.005
 
     # study 1: grid searching without the hint from DEM
-    params_bound = [(1e-7, 0.1), (1e-4, 0.5)]
+    # params_bound = [(1e-7, 0.1), (1e-4, 0.5)]
 
-    p_bound = params_bound[0]
-    q_bound = params_bound[1]
+    # p_bound = params_bound[0]
+    # q_bound = params_bound[1]
 
-    p_cont = np.arange(p_bound[0], p_bound[1], delta_p)
-    q_cont = np.arange(q_bound[0], q_bound[1], delta_q)
+    # p_cont = np.arange(p_bound[0], p_bound[1], delta_p)
+    # q_cont = np.arange(q_bound[0], q_bound[1], delta_q)
 
-    # proj.insert_one({'algorithm': 'GS-0', 'details': []})
-    params_cont = []
-    res_cont = []
-    i = 0
-    t1 = time.perf_counter()
-    for p in p_cont:
-        for q in q_cont:
-            i += 1
-            r_2, mse_, sigma = r2_mse_abm([p, q], S)
-            m = 10000 * sigma
-            proj.update_one({'algorithm': 'GS-0'}, {'$addToSet': {'details': [r_2, mse_, p, q, m]}})
-            res_cont.append([r_2, mse_, p, q, m])
-            if i % 500 == 0:
-                best_sol = sorted(res_cont, key=lambda x: x[1])[0]
-                print("====================================================")
-                print(f"{i}, time elasped: {time.perf_counter()-t1:.4f}")
-                print(f"Best solution: r^2={best_sol[0]:.4f}, p={best_sol[2]:.4f}, q={best_sol[3]:.4f}, m={best_sol[4]:.2f}")
+    # # proj.insert_one({'algorithm': 'GS-0', 'details': []})
+    # params_cont = []
+    # res_cont = []
+    # i = 0
+    # t1 = time.perf_counter()
+    # for p in p_cont:
+    #     for q in q_cont:
+    #         i += 1
+    #         r_2, mse_, sigma = r2_mse_abm([p, q], S)
+    #         m = 10000 * sigma
+    #         proj.update_one({'algorithm': 'GS-0'}, {'$addToSet': {'details': [r_2, mse_, p, q, m]}})
+    #         res_cont.append([r_2, mse_, p, q, m])
+    #         if i % 500 == 0:
+    #             best_sol = sorted(res_cont, key=lambda x: x[1])[0]
+    #             print("====================================================")
+    #             print(f"{i}, time elasped: {time.perf_counter()-t1:.4f}")
+    #             print(f"Best solution: r^2={best_sol[0]:.4f}, p={best_sol[2]:.4f}, q={best_sol[3]:.4f}, m={best_sol[4]:.2f}")
                 
-    best_sol = sorted(res_cont, key=lambda x: x[1])[0]
-    proj.update_one({'algorithm': 'GS-0'}, {'$set': {'res': best_sol}}, upsert=True)
+    # best_sol = sorted(res_cont, key=lambda x: x[1])[0]
+    # proj.update_one({'algorithm': 'GS-0'}, {'$set': {'res': best_sol}}, upsert=True)
     
     # study 2: grid searching with the hint from DEM
-    p0, q0 = gener_init_params(S)
-    params_bound = [[max(1e-7, p0 - 10*delta_p), min(0.1, p0 + 10*delta_p)], 
-                    [max(1e-4, q0 - 10*delta_q), min(0.5, q0 + 10*delta_q)]]
+    for iter in range(10):
+        p0, q0 = gener_init_params(S)
+        params_bound = [[max(1e-7, p0 - 10*delta_p), min(0.1, p0 + 10*delta_p)], 
+                        [max(1e-4, q0 - 10*delta_q), min(0.5, q0 + 10*delta_q)]]
+        p_bound = params_bound[0]
+        q_bound = params_bound[1]
+
+        p_cont = np.arange(p_bound[0], p_bound[1], delta_p)
+        q_cont = np.arange(q_bound[0], q_bound[1], delta_q)
+
+        params_cont = []
+        res_cont = []
+        i = 0
+        t1 = time.perf_counter()
+        for p in p_cont:
+            for q in q_cont:
+                i += 1
+                r_2, mse_, sigma = r2_mse_abm([p, q], S)
+                m = 10000 * sigma
+                res_cont.append([r_2, mse_, p, q, m])
+                    
+        best_sol = sorted(res_cont, key=lambda x: x[1])[0]
+        print("====================================================")
+        print(f"Iteration {iter}, time elasped: {time.perf_counter()-t1:.4f}")
+        print(f"Best solution: r^2={best_sol[0]:.4f}, p={best_sol[2]:.4f}, q={best_sol[3]:.4f}, m={best_sol[4]:.2f}")
+        proj.insert_one({'algorithm': 'GS-1', 'res': best_sol, 'grids': i})

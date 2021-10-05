@@ -128,7 +128,7 @@ def gener_init_params(S, g=nx.gnm_random_graph(10000, 30000)):  # 生成初始�
 if __name__ == "__main__":
     import time
     from pymongo import MongoClient
-    client = MongoClient()
+    client = MongoClient('106.14.27.147')
     db = client.abmDiffusion
     proj = db.compaAlgorithms
     
@@ -230,16 +230,44 @@ if __name__ == "__main__":
     # print(f"Best individual, mse: {best_sol[0]:.4f}, p: {best_sol[1][0]: .5f}, q: {best_sol[1][1]: .5f}")
     # print(f"r^2:{r_2:.4f}, mse: {mse_:.4f}")
     
+    # study 1: ga-0 without the hint from DEM
+    # best_sol_cont = []
+    # for i in range(10):
+    #     t1 = time.perf_counter()
+    #     ga = GeneticAlgorithm(fitne_func=fitness, indiv_bound=([(1e-7, 0.2), (1e-4, 1)]),
+    #                       muta_rate=0.25, cros_rate=0.8, num_popul=100)
+    #     ga.evolution(num_generation=100, is_print=False)
+    #     best_sol = sorted(ga.best_solu, key=lambda x: x[0])[0]
+    #     r_2, mse_, sigma = r2_mse_abm(best_sol[1], S=S)
+    #     p, q, m = best_sol[1][0], best_sol[1][1], 10000*sigma
+    #     proj.insert_one({'algorithm': 'GA-0', 'res': [r_2, mse_, p, q, m]})
+    #     print("======================================================")
+    #     print(f"Repetition {i+1}")
+    #     print(f"Time elapsed {time.perf_counter() - t1:.4f}s")
+    #     print(f"Best individual, mse: {best_sol[0]:.4f}")
+    #     print(f"p: {best_sol[1][0]: .5f}, q: {best_sol[1][1]: .5f}")
+    #     print(f"r^2:{r_2:.4f}, mse: {mse_:.4f}\n")
+    #     best_sol_cont.append([r_2, mse_, best_sol[1][0], best_sol[1][1], 10000*sigma])
+    
+    # study 2: ga-1 with the hint from DEM
     best_sol_cont = []
+    p0q0_cont = []
+    delta_p = 0.001
+    delta_q = 0.005
     for i in range(10):
         t1 = time.perf_counter()
-        ga = GeneticAlgorithm(fitne_func=fitness, indiv_bound=([(1e-7, 0.2), (1e-4, 1)]),
+        p0, q0 = gener_init_params(S)
+        p0q0_cont.append([p0, q0])
+        params_bound = [[max(1e-7, p0 - 20*delta_p), min(0.2, p0 + 20*delta_p)], 
+                    [max(1e-4, q0 - 20*delta_q), min(0.9, q0 + 20*delta_q)]]
+        
+        ga = GeneticAlgorithm(fitne_func=fitness, indiv_bound=params_bound,
                           muta_rate=0.25, cros_rate=0.8, num_popul=100)
-        ga.evolution(num_generation=100, is_print=False)
+        ga.evolution(num_generation=20, is_print=False)  # generation number is 20
         best_sol = sorted(ga.best_solu, key=lambda x: x[0])[0]
         r_2, mse_, sigma = r2_mse_abm(best_sol[1], S=S)
         p, q, m = best_sol[1][0], best_sol[1][1], 10000*sigma
-        proj.insert_one({'algorithm': 'GA-0', 'res': [r_2, mse_, p, q, m]})
+        proj.insert_one({'algorithm': 'GA-1', 'res': [r_2, mse_, p, q, m]})
         print("======================================================")
         print(f"Repetition {i+1}")
         print(f"Time elapsed {time.perf_counter() - t1:.4f}s")
@@ -247,10 +275,3 @@ if __name__ == "__main__":
         print(f"p: {best_sol[1][0]: .5f}, q: {best_sol[1][1]: .5f}")
         print(f"r^2:{r_2:.4f}, mse: {mse_:.4f}\n")
         best_sol_cont.append([r_2, mse_, best_sol[1][0], best_sol[1][1], 10000*sigma])
-    
-    # study 2: 
-    p0, q0 = gener_init_params(S)
-    delta_p = 0.001
-    delta_q = 0.005
-    params_bound = [[max(1e-7, p0 - 20*delta_p), min(0.2, p0 + 20*delta_p)], 
-                    [max(1e-4, q0 - 20*delta_q), min(1, q0 + 20*delta_q)]]
