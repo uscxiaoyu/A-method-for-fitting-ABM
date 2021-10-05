@@ -1,5 +1,8 @@
 from abmdiffuse import Diffuse
+from bassestimate import BassEstimate
 import numpy as np
+import pandas as pd
+import statsmodels.formula.api as smf
 import networkx as nx
 
 class GeneticAlgorithm:
@@ -95,6 +98,31 @@ class GeneticAlgorithm:
             
             self.last_iter = {'population': self.population[:], 'fitness': self.fitne_values[:]}  # record the last iteration infos
             self.reproduction()
+
+
+def gener_init_params(S, g=nx.gnm_random_graph(10000, 30000)):  # 生成初始搜索点(p0,q0)
+    rgs = BassEstimate(S)
+    P0, Q0 = rgs.optima_search()[1 : 3]  # BASS最优点（P0,Q0）
+    p_range = np.linspace(0.3*P0, P0, num=3)
+    q_range = np.linspace(0.06*Q0, 0.3*Q0, num=3)
+    to_fit = {}
+    params_cont = []
+    for p in p_range:  # 取9个点用于确定参数与估计值之间的联系
+        for q in q_range:
+            diffu = Diffuse(p, q, g=g, num_runs=len(S), multi_proc=True)
+            s_estim = diffu.repete_diffuse()
+            s_estim_avr = np.mean(s_estim, axis=0)
+            rgs_1 = BassEstimate(s_estim_avr)
+            P, Q = rgs_1.optima_search()[1: 3]
+            params_cont.append([p, q, P, Q])
+
+    to_fit = pd.DataFrame(params_cont, columns=['p', 'q', 'P', 'Q'])
+    result_p = smf.ols('p~P+Q-1', data=to_fit).fit()
+    result_q = smf.ols('q~P+Q-1', data=to_fit).fit()
+
+    p0 = result_p.params['P']*P0 + result_p.params['Q']*Q0
+    q0 = result_q.params['P']*P0 + result_q.params['Q']*Q0
+    return round(p0, 5), round(q0, 5)   # 保留5位小数位，防止出错
 
 
 if __name__ == "__main__":
@@ -219,3 +247,10 @@ if __name__ == "__main__":
         print(f"p: {best_sol[1][0]: .5f}, q: {best_sol[1][1]: .5f}")
         print(f"r^2:{r_2:.4f}, mse: {mse_:.4f}\n")
         best_sol_cont.append([r_2, mse_, best_sol[1][0], best_sol[1][1], 10000*sigma])
+    
+    # study 2: 
+    p0, q0 = gener_init_params(S)
+    delta_p = 0.001
+    delta_q = 0.005
+    params_bound = [[max(1e-7, p0 - 20*delta_p), min(0.2, p0 + 20*delta_p)], 
+                    [max(1e-4, q0 - 20*delta_q), min(1, q0 + 20*delta_q)]]

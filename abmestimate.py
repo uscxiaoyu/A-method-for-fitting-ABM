@@ -8,7 +8,7 @@ import networkx as nx
 import time
 
 
-class estimateABM:
+class EstimateABM:
     num_conds = 2  # 构建网格的节点个数
 
     def __init__(self, s, intv_p=0.0005, intv_q=0.005, G=nx.gnm_random_graph(10000, 30000), m_p=True):
@@ -173,7 +173,7 @@ if __name__ == '__main__':
     t1 = time.perf_counter()
     s = china_set[txt][1]
     year = china_set[txt][0]
-    est_abm = estimateABM(s,)
+    est_abm = EstimateABM(s,)
     p0, q0 = est_abm.gener_init_pq()
     t2 = time.perf_counter()
     print(f"=========={txt}===========")
