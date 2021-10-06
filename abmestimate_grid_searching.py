@@ -114,7 +114,6 @@ if __name__ == "__main__":
         p_cont = np.arange(p_bound[0], p_bound[1], delta_p)
         q_cont = np.arange(q_bound[0], q_bound[1], delta_q)
 
-        params_cont = []
         res_cont = []
         i = 0
         t1 = time.perf_counter()
@@ -129,4 +128,4 @@ if __name__ == "__main__":
         print("====================================================")
         print(f"Iteration {iter}, time elasped: {time.perf_counter()-t1:.4f}")
         print(f"Best solution: r^2={best_sol[0]:.4f}, p={best_sol[2]:.4f}, q={best_sol[3]:.4f}, m={best_sol[4]:.2f}")
-        proj.insert_one({'algorithm': 'GS-1', 'res': best_sol, 'grids': i})
+        proj.insert_one({'algorithm': 'GS-1', 'res': best_sol, 'num_grids': i})
