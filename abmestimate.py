@@ -113,7 +113,7 @@ class EstimateABM:
                 pq_set2.update(temp)
 
             new_points = pq_set2 - pq_set  # 集合减, 未包含在pd_set中的新(p, q)
-            print(f"第{i}轮, 新增点个数:{len(new_points)}")
+            # print(f"第{i}轮, 新增点个数:{len(new_points)}")
             if len(new_points) == 0:
                 break
             else:
@@ -135,6 +135,7 @@ class EstimateABM:
         R2 = self.r2(opt_curve)
         search_steps = len(pq_set)  # 搜索点的数量
         result = {'params': opt_solution[0][1:],  # 估计值 [p, q, m]
+                  'mse': opt_solution[0][0],
                   'fitness': R2,
                   'best_curve': opt_curve,  # 最优拟合曲线
                   'num_nodes': search_steps,    # 搜索点的数量
@@ -146,6 +147,11 @@ class EstimateABM:
 
 if __name__ == '__main__':
     import pylab as pl
+    from pymongo import MongoClient
+    client = MongoClient('106.14.27.147')
+    db = client.abmDiffusion
+    proj = db.compaAlgorithms
+    
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
     data_set = {'room air conditioners':(np.arange(1949, 1962), [96, 195, 238, 380, 1045, 1230, 1267, 1828, 1586,
                                                                1673, 1800, 1580, 1500]),
@@ -169,29 +175,52 @@ if __name__ == '__main__':
                                                     1.8,5.48,1.35,1.47,0.52,1.03,3.28,-1.4,1.72,1.26,0.62,1.25])
              }
 
-    txt = "mobile phones"
-    t1 = time.perf_counter()
-    s = china_set[txt][1]
-    year = china_set[txt][0]
-    est_abm = EstimateABM(s,)
-    p0, q0 = est_abm.gener_init_pq()
-    t2 = time.perf_counter()
-    print(f"=========={txt}===========")
-    print(f"第一阶段: {t2 - t1:.2f}秒")
-    print(f'    p0:{p0:.5f}, q0:{q0:.5f}')
+    # txt = "mobile phones"
+    # t1 = time.perf_counter()
+    # s = china_set[txt][1]
+    # year = china_set[txt][0]
+    # est_abm = EstimateABM(s,)
+    # p0, q0 = est_abm.gener_init_pq()
+    # t2 = time.perf_counter()
+    # print(f"=========={txt}===========")
+    # print(f"第一阶段: {t2 - t1:.2f}秒")
+    # print(f'    p0:{p0:.5f}, q0:{q0:.5f}')
     
-    result = est_abm.solution_search(p0, q0)
-    t3 = time.perf_counter()
-    print(f'第二阶段:: {t3 - t2:.2f}秒')
-    print(f'一共用时: {t3 - t1:.2f}秒')
-    print(f"R2:{result['fitness']:.4f}    num_nodes:{result['num_nodes']}")
+    # result = est_abm.solution_search(p0, q0)
+    # t3 = time.perf_counter()
+    # print(f'第二阶段:: {t3 - t2:.2f}秒')
+    # print(f'一共用时: {t3 - t1:.2f}秒')
+    # print(f"R2:{result['fitness']:.4f}    num_nodes:{result['num_nodes']}")
 
-    pl.style.use('ggplot')
-    fig = pl.figure(figsize=(8, 6))
-    ax = fig.add_subplot(1, 1, 1)
-    ax.set_xlabel('Year', fontsize=20)
-    ax.set_ylabel('Number of Adopters', fontsize=20)
-    ax.plot(year, result['best_curve'])
-    ax.scatter(year, s, c='grey', s=30, alpha=0.5)
-    ax.grid(False)
-    pl.show()
+    # pl.style.use('ggplot')
+    # fig = pl.figure(figsize=(8, 6))
+    # ax = fig.add_subplot(1, 1, 1)
+    # ax.set_xlabel('Year', fontsize=20)
+    # ax.set_ylabel('Number of Adopters', fontsize=20)
+    # ax.plot(year, result['best_curve'])
+    # ax.scatter(year, s, c='grey', s=30, alpha=0.5)
+    # ax.grid(False)
+    # pl.show()
+    
+    # study 2: searching without the initial point
+    txt = "clothers dryers"
+    S = np.array(data_set[txt][1])
+    
+    for itera in range(10):
+        t1 = time.perf_counter()
+        p0 = (0.1 - 1e-7) * np.random.rand() + 1e-7
+        q0 = (0.5 - 1e-4) * np.random.rand() + 1e-4
+        est_abm = EstimateABM(S)
+        result = est_abm.solution_search(p0, q0)
+        r_2 = result["fitness"]
+        mse_ = result["mse"]
+        p, q, m = result["params"]
+        num_points = result['num_nodes']
+        proj.insert_one({'algorithm': 'HC-0', 'res': [r_2, mse_, p, q, m], 'num_grids': num_points})
+        print("======================================================")
+        print(f"Repetition {itera+1}")
+        print(f"Time elapsed {time.perf_counter() - t1:.4f}s")
+        print(f"Evaluate {num_points} points")
+        print(f"Best individual, mse={mse_:.4f}")
+        print(f"p={p: .5f}, q={q:.5f}, m={m:.2f}")
+        print(f"r^2={r_2:.4f}, mse={mse_:.4f}\n")
