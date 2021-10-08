@@ -11,7 +11,11 @@ def func(x, n=1):
     p, q = x[:2]
     s_full = x[2:]
     max_ix = np.argmax(s_full)
-    s = s_full[:max_ix + 1 + n]
+    if max_ix < 7:
+        s = s_full[:7]
+    else:
+        s = s_full[:max_ix + 1 + n]
+        
     bassest = eb.BassEstimate(s)
     _, P, Q, M = bassest.optima_search(c_n=200, threshold=10e-6)
     r_2 = bassest.r2([P, Q, M])
@@ -20,12 +24,12 @@ def func(x, n=1):
 if __name__ == '__main__':
     client = MongoClient('106.14.27.147')
     db = client.abmDiffusion
-    prj = db.neighEffects
-    alpha_cont = [x['_id'] for x in prj.find(
-        {"estimates": {"$exists": False}}, projection={'_id': 1})]
+    prj = db.sparcity
+    txt_cont = [x['_id'] for x in prj.find(
+        {}, projection={'_id': 1})]
 
-    for alpha in alpha_cont:
-        all_data = prj.find_one({"_id": alpha})
+    for txt in txt_cont:
+        all_data = prj.find_one({"_id": txt})
         diff_data = all_data["diffuse_curves"]
         pool = multiprocessing.Pool(processes=5)
         result = []
@@ -43,5 +47,5 @@ if __name__ == '__main__':
             d = res.get()
             d_dict[str(d[:2])] = d
 
-        print(f"{alpha}: Time elapsed {(time.perf_counter() - t1):.2f}s")
-        prj.update_one({"_id": alpha}, {"$set": {"estimates": {"ctime": datetime.datetime.now(), **d_dict}}}, upsert=True)
+        print(f"{txt}: Time elapsed {(time.perf_counter() - t1):.2f}s")
+        prj.update_one({"_id": txt}, {"$set": {"estimates": {"ctime": datetime.datetime.now(), **d_dict}}}, upsert=True)
