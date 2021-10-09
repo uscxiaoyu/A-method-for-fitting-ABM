@@ -16,7 +16,7 @@ def func(p, q, g):
 
 
 if __name__ == '__main__':
-    client = MongoClient()
+    client = MongoClient('106.14.27.147')
     db = client.abmDiffusion
     prj = db.sparcity
     # for i, txt in enumerate(txt_cont):
