@@ -18,7 +18,7 @@ def func(p, q, g):
 if __name__ == '__main__':
     client = MongoClient('106.14.27.147')
     db = client.abmDiffusion
-    prj = db.sparcity_refine
+    prj = db.sparsity
     # for i, txt in enumerate(txt_cont):
     while True:
         mongo_data = prj.find_one_and_update({"state": 0}, {"$set": {"state": 1}})
