@@ -81,7 +81,7 @@ class Gen_para:
 if __name__ == '__main__':
     client = MongoClient('106.14.27.147')
     db = client.abmDiffusion
-    prj = db.sparcity
+    prj = db.sparsity
     bound_dict = {}
     g = nx.gnm_random_graph(10000, 30000)
     for j, alpha in enumerate(alpha_cont[1:]):
